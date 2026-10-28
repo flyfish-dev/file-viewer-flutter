@@ -28,6 +28,9 @@ if (copy.status !== 0) throw new Error(copy.stderr || copy.stdout);
 for (const file of ['file-viewer-copy-assets.manifest.json', 'flyfish-viewer-assets.json']) {
   const metadata = JSON.parse(await readFile(join(source, file), 'utf8'));
   metadata.generatedAt = generatedAt;
+  if (typeof metadata.validation?.checkedAt === 'string') {
+    metadata.validation.checkedAt = generatedAt;
+  }
   await writeFile(join(source, file), `${JSON.stringify(metadata, null, 2)}\n`);
 }
 const receiptPath = join(source, 'file-viewer-copy-assets.receipt.json');

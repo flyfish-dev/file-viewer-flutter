@@ -40,6 +40,20 @@ for name in PACKAGES:
     if count != 1:
         raise RuntimeError(f'Missing version-locked dependency: {name}')
 (OUTPUT / 'pubspec.yaml').write_text(PUBSPEC)
+for name in PACKAGES:
+    if name == 'file_viewer_flutter_linux':
+        continue
+    assets = OUTPUT / 'packages' / name / 'assets'
+    manifest = json.loads((assets / 'manifest.json').read_text())
+    if manifest['package'] != name or manifest['protocolVersion'] != 1:
+        raise RuntimeError(f'Incompatible SDK resource manifest: {name}')
+    for entry in manifest['files']:
+        path = assets / entry['path']
+        if not path.resolve().is_relative_to(assets.resolve()):
+            raise RuntimeError('Resource path escapes its SDK asset package.')
+        data = path.read_bytes()
+        if len(data) != entry['size'] or hashlib.sha256(data).hexdigest() != entry['sha256']:
+            raise RuntimeError(f'SDK resource checksum mismatch: {name}/{entry["path"]}')
 # The example obtains local transitive dependencies from the bundled root.
 example = OUTPUT / 'example' / 'pubspec.yaml'
 content = example.read_text()
