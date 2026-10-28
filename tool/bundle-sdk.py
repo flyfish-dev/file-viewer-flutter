@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,10 +22,18 @@ SKIP = {'.git', '.dart_tool', 'build', 'Pods', 'ephemeral', '.gradle', '.kotlin'
         '__pycache__', '.DS_Store', 'local.properties', 'Generated.xcconfig',
         'flutter_export_environment.sh', '.flutter-plugins-dependencies',
         'pubspec_overrides.yaml', 'pubspec.lock', '.symlinks', '.swiftpm'}
+TRACKED = set(subprocess.check_output(
+    ['git', '-C', str(ROOT), 'ls-files', '-z'], text=True).split('\0')) - {''}
+TRACKED_DIRECTORIES = {
+    parent.as_posix() for name in TRACKED for parent in Path(name).parents
+}
 
 
-def ignore(_directory, names):
-    return [name for name in names if name in SKIP or name.endswith('.pyc')]
+def ignore(directory, names):
+    relative = Path(directory).relative_to(ROOT)
+    return [name for name in names if name in SKIP or name.endswith('.pyc') or
+            ((relative / name).as_posix() not in TRACKED and
+             (relative / name).as_posix() not in TRACKED_DIRECTORIES)]
 
 
 if OUTPUT.exists():
