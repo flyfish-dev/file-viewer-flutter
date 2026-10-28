@@ -65,5 +65,10 @@ function(file_viewer_prepare_webview2)
   endif()
   list(GET runtime_executables 0 runtime_executable)
   get_filename_component(runtime_root "${runtime_executable}" DIRECTORY)
-  install(DIRECTORY "${runtime_root}/" DESTINATION "FileViewerWebView2" COMPONENT Runtime)
+  # Flutter stores a generator expression in CMAKE_INSTALL_PREFIX. A relative
+  # destination leaves that expression literal in cmake_install.cmake, which is
+  # an invalid Windows path. Resolve the runner target while generating instead.
+  install(DIRECTORY "${runtime_root}/"
+    DESTINATION "$<TARGET_FILE_DIR:${BINARY_NAME}>/FileViewerWebView2"
+    COMPONENT Runtime)
 endfunction()
