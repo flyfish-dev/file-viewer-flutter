@@ -1,0 +1,1 @@
+import{a as i}from"./chunk-NNTI5FQZ.mjs";function c(t,e){t.accDescr&&e.setAccDescription?.(t.accDescr),t.accTitle&&e.setAccTitle?.(t.accTitle),t.title&&e.setDiagramTitle?.(t.title)}i(c,"populateCommonDb");export{c as a};

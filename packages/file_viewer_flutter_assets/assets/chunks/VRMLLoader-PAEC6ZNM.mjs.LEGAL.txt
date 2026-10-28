@@ -1,0 +1,4 @@
+Bundled license information:
+
+three/examples/jsm/libs/chevrotain.module.min.js:
+  /*! chevrotain - v9.0.1 */

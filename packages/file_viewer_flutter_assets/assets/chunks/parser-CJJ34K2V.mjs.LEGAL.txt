@@ -1,0 +1,7 @@
+Bundled license information:
+
+styled-exceljs/xlsx.mjs:
+  /*! xlsx.js (C) 2013-present SheetJS -- http://sheetjs.com */
+
+styled-exceljs/xlsx.mjs:
+  /*! sheetjs (C) 2013-present SheetJS -- http://sheetjs.com */

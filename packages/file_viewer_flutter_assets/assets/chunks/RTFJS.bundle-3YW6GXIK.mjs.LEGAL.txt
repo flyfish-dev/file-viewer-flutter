@@ -1,0 +1,18 @@
+Bundled license information:
+
+rtf.js/dist/EMFJS.bundle.js:
+  /*!****************************!*\
+    !*** ./src/emfjs/index.ts ***!
+    \****************************/
+
+rtf.js/dist/WMFJS.bundle.js:
+  /*!****************************!*\
+    !*** ./src/wmfjs/index.ts ***!
+    \****************************/
+
+rtf.js/dist/RTFJS.bundle.js:
+  /*! cptable.js (C) 2013-present SheetJS -- http://sheetjs.com */
+  /*! cputils.js (C) 2013-present SheetJS -- http://sheetjs.com */
+  /*!****************************!*\
+    !*** ./src/rtfjs/index.ts ***!
+    \****************************/

@@ -1,0 +1,8 @@
+Bundled license information:
+
+libarchive.js/dist/libarchive.js:
+  /**
+   * @license
+   * Copyright 2019 Google LLC
+   * SPDX-License-Identifier: Apache-2.0
+   */
