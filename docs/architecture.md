@@ -16,6 +16,8 @@ flowchart LR
 
 The UI component does not instantiate its own permanent server per route. An application-scoped runtime owns a resource host and session pool. A native view can attach to only one widget. Widget disposal schedules session release after the Flutter frame. On macOS, each platform-view ID owns a fresh NSView container; the retained WKWebView moves into the new container. Flutter's later disposal of the old ID therefore cannot detach the reused view. A maximum of one released session is retained; additional idle sessions are destroyed.
 
+Windows prepares a retained composition-texture WebView through the pinned adapter's native channel. Its windowed headless controller cannot transfer into a Flutter texture, so it is not used for Windows warm-up. The first widget and subsequent attachments reuse the retained composition view and document.
+
 ## Runtime states
 
 `cold → booting → ready` describes shell and parser-module readiness. Document load events describe a particular document generation. The request bridge includes a protocol version, request identifier and document generation so stale responses cannot overwrite a newer document. A failed or terminated session is never returned to the spare pool.

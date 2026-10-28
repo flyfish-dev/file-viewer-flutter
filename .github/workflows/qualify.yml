@@ -115,7 +115,7 @@ jobs:
         working-directory: example
       - name: Real Windows/macOS integration
         if: matrix.platform != 'linux'
-        run: flutter test integration_test/viewer_test.dart -d ${{ matrix.platform }} --no-pub
+        run: flutter test integration_test/viewer_test.dart -d ${{ matrix.platform }} --no-pub --dart-define=FILE_VIEWER_DIAGNOSTICS=true
         working-directory: example
       - name: Verify Windows runtime signature
         if: matrix.platform == 'windows'

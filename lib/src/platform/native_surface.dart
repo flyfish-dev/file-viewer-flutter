@@ -77,64 +77,103 @@ class NativeViewerSurface implements FileViewerSurface {
       await _environment?.dispose();
       return;
     }
-    _headless = _platform.createPlatformHeadlessInAppWebView(
-      PlatformHeadlessInAppWebViewCreationParams(
-        initialUserScripts: UnmodifiableListView([
-          UserScript(
-            source: "window.addEventListener('error', event => console.error(event.error?.stack || event.message || ('resource failed: ' + event.target?.tagName)), true); window.addEventListener('unhandledrejection', event => console.error(event.reason?.stack || String(event.reason))); document.addEventListener('securitypolicyviolation', event => console.error('CSP: ' + event.violatedDirective));",
-            injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
-          ),
-        ]),
-        initialSize: const Size(800, 600),
-        webViewEnvironment: _environment,
-        initialUrlRequest: URLRequest(
-          url: WebUri(resources.shellUri.toString()),
+    final params = PlatformHeadlessInAppWebViewCreationParams(
+      initialUserScripts: UnmodifiableListView([
+        UserScript(
+          source: "window.addEventListener('error', event => console.error(event.error?.stack || event.message || ('resource failed: ' + event.target?.tagName)), true); window.addEventListener('unhandledrejection', event => console.error(event.reason?.stack || String(event.reason))); document.addEventListener('securitypolicyviolation', event => console.error('CSP: ' + event.violatedDirective));",
+          injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
         ),
-        initialSettings: InAppWebViewSettings(
-          javaScriptEnabled: true,
-          isInspectable: kDebugMode,
-          transparentBackground: true,
-          supportZoom: false,
-          useShouldOverrideUrlLoading: true,
-          mediaPlaybackRequiresUserGesture: true,
-          allowsInlineMediaPlayback: true,
-          javaScriptHandlersForMainFrameOnly: true,
-          javaScriptBridgeForMainFrameOnly: true,
-          javaScriptHandlersOriginAllowList: {
-            '^${RegExp.escape(resources.shellUri.origin)}\$',
-          },
-        ),
-        onWebViewCreated: _onCreated,
-        onLoadStart: (_, _) => _trace('load started'),
-        onLoadStop: _onLoadStop,
-        onConsoleMessage: (_, message) => _trace('console: ${message.message}'),
-        onReceivedHttpError: (_, _, response) =>
-            _trace('HTTP ${response.statusCode}'),
-        onReceivedError: (_, request, error) {
-          if (request.isForMainFrame == true && !_disposed) {
-            _onMessage({
-              'protocolVersion': 1,
-              'type': 'surfaceError',
-              'message': error.description,
-            });
-          }
-        },
-        shouldOverrideUrlLoading: _navigation,
-        onCreateWindow: (_, _) async => false,
-        onWebContentProcessDidTerminate: (_) async => _terminated(),
-        onRenderProcessGone: (_, _) async {
-          _terminated();
-          return;
+      ]),
+      initialSize: const Size(800, 600),
+      webViewEnvironment: _environment,
+      initialUrlRequest: URLRequest(url: WebUri(resources.shellUri.toString())),
+      initialSettings: InAppWebViewSettings(
+        javaScriptEnabled: true,
+        isInspectable: kDebugMode,
+        transparentBackground: true,
+        supportZoom: false,
+        useShouldOverrideUrlLoading: true,
+        mediaPlaybackRequiresUserGesture: true,
+        allowsInlineMediaPlayback: true,
+        javaScriptHandlersForMainFrameOnly: true,
+        javaScriptBridgeForMainFrameOnly: true,
+        javaScriptHandlersOriginAllowList: {
+          '^${RegExp.escape(resources.shellUri.origin)}\$',
         },
       ),
+      onWebViewCreated: _onCreated,
+      onLoadStart: (_, _) => _trace('load started'),
+      onLoadStop: _onLoadStop,
+      onConsoleMessage: (_, message) => _trace('console: ${message.message}'),
+      onReceivedHttpError: (_, _, response) =>
+          _trace('HTTP ${response.statusCode}'),
+      onReceivedError: (_, request, error) {
+        if (request.isForMainFrame == true && !_disposed) {
+          _onMessage({
+            'protocolVersion': 1,
+            'type': 'surfaceError',
+            'message': error.description,
+          });
+        }
+      },
+      shouldOverrideUrlLoading: _navigation,
+      onCreateWindow: (_, _) async => false,
+      onWebContentProcessDidTerminate: (_) async => _terminated(),
+      onRenderProcessGone: (_, _) async {
+        _terminated();
+        return;
+      },
     );
+    if (Platform.isWindows) {
+      // The pinned Windows adapter does not transfer its windowed headless
+      // controller to a composition texture. Create its keep-alive composition
+      // view from the start so warm-up and every widget use the same WebView.
+      _onCreated(
+        _platform.createPlatformInAppWebViewController(
+          PlatformInAppWebViewControllerCreationParams(
+            id: _keepAlive.id,
+            webviewParams: params,
+          ),
+        ),
+      );
+      const views = MethodChannel(
+        'com.pichillilorenzo/flutter_inappwebview_manager',
+      );
+      final textureId = await views.invokeMethod<int>('createInAppWebView', {
+        'keepAliveId': _keepAlive.id,
+        'webViewEnvironmentId': _environment?.id,
+        'initialUrlRequest': params.initialUrlRequest?.toMap(),
+        'initialSettings': params.initialSettings?.toMap(),
+        'initialUserScripts': params.initialUserScripts
+            ?.map((script) => script.toMap())
+            .toList(),
+        'contextMenu': <String, Object?>{},
+      });
+      if (_disposed) {
+        await _platform
+            .createPlatformInAppWebViewControllerStatic()
+            .disposeKeepAlive(_keepAlive);
+        return;
+      }
+      if (textureId == null) {
+        throw const FileViewerException(
+          FileViewerErrorCode.incompatibleRuntime,
+          'The retained Windows WebView could not be created.',
+        );
+      }
+      await MethodChannel('com.pichillilorenzo/custom_platform_view_$textureId')
+          .invokeMethod<void>('setSize', [800.0, 600.0, 1.0]);
+      _trace('retained Windows texture started');
+      return;
+    }
+    _headless = _platform.createPlatformHeadlessInAppWebView(params);
     await _headless!.run();
     _trace('headless started');
   }
 
   void _trace(String message) {
     if (kDebugMode && const bool.fromEnvironment('FILE_VIEWER_DIAGNOSTICS')) {
-      debugPrint('FileViewer surface: $message');
+      debugPrintSynchronously('FileViewer surface: $message');
     }
   }
 
