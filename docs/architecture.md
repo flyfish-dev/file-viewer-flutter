@@ -14,7 +14,7 @@ flowchart LR
   Resources --> Core
 ```
 
-The UI component does not instantiate its own permanent server per route. An application-scoped runtime owns a resource host and session pool. A native view can attach to only one widget. Widget disposal releases its session after the frame detaches the native view. A maximum of one released session is retained; additional idle sessions are destroyed.
+The UI component does not instantiate its own permanent server per route. An application-scoped runtime owns a resource host and session pool. A native view can attach to only one widget. Widget disposal schedules session release after the Flutter frame. On macOS, each platform-view ID owns a fresh NSView container; the retained WKWebView moves into the new container. Flutter's later disposal of the old ID therefore cannot detach the reused view. A maximum of one released session is retained; additional idle sessions are destroyed.
 
 ## Runtime states
 

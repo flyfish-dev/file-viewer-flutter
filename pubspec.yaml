@@ -15,7 +15,6 @@ dependencies:
   flutter_inappwebview_platform_interface: 1.4.0-beta.3
   flutter_inappwebview_android: 1.2.0-beta.3
   flutter_inappwebview_ios: 1.2.0-beta.3
-  flutter_inappwebview_macos: 1.2.0-beta.3
   flutter_inappwebview_windows: 0.7.0-beta.3
   web: ^1.1.1
   crypto: ^3.0.6
@@ -28,6 +27,7 @@ dependencies:
   file_viewer_flutter_assets_drawing: 0.1.0-dev.1
   file_viewer_flutter_assets_typst: 0.1.0-dev.1
   file_viewer_flutter_linux: 0.1.0-dev.1
+  file_viewer_flutter_macos: 0.1.0-dev.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -38,6 +38,8 @@ flutter:
   uses-material-design: true
   plugin:
     platforms:
+      macos:
+        default_package: file_viewer_flutter_macos
       windows:
         pluginClass: FileViewerFlutterPluginCApi
 

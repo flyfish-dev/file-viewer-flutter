@@ -68,7 +68,7 @@ Rendering is local. A remote source, an embedded remote image/link, browser poli
 
 The pinned toolchain is Flutter `3.47.4` and Dart `3.13.3` (`.fvmrc`).
 
-The native adapters are pinned to the compatible InAppWebView `1.2.0-beta.3` family (Windows `0.7.0-beta.3`), including the Android AGP 9 fix. The SDK uses the federated platform APIs directly and does not install an unused second Linux engine. This prerelease dependency is another reason to keep the SDK at development-preview status.
+The native adapters are pinned to the compatible InAppWebView `1.2.0-beta.3` family (Windows `0.7.0-beta.3`), including the Android AGP 9 fix. macOS uses a checksum-verified derivative with a fresh native container for each Flutter attachment while retaining the WKWebView. Its plugin and channels have a separate namespace. The SDK uses the federated platform APIs directly and does not install an unused second Linux engine. These prerelease dependencies are another reason to keep the SDK at development-preview status.
 
 ```sh
 flutter pub get
@@ -87,4 +87,4 @@ Run `example/integration_test/viewer_test.dart` on actual platform WebViews. `to
 
 ## Licenses
 
-The adapter uses Apache-2.0. Keep the upstream resource license ledgers, notices and source offers included in every asset package. Linux also retains the original `webview_cef` and CEF notices. The legacy PPT renderer's watermark is preserved. Native engine distributions carry their own license terms; include the complete bundled runtime directories when distributing an application.
+The adapter uses Apache-2.0. Keep the upstream resource license ledgers, notices and source offers included in every asset package. The macOS adapter retains its original InAppWebView license and archive provenance; Linux retains the original `webview_cef` and CEF notices. The legacy PPT renderer's watermark is preserved. Native engine distributions carry their own license terms; include the complete bundled runtime directories when distributing an application.

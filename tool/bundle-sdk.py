@@ -15,7 +15,7 @@ OUTPUT = ROOT / '.release' / 'sdk' / f'file_viewer_flutter-{VERSION}'
 PACKAGES = [
     'file_viewer_flutter_assets', 'file_viewer_flutter_assets_cad',
     'file_viewer_flutter_assets_drawing', 'file_viewer_flutter_assets_typst',
-    'file_viewer_flutter_linux',
+    'file_viewer_flutter_linux', 'file_viewer_flutter_macos',
 ]
 SKIP = {'.git', '.dart_tool', 'build', 'Pods', 'ephemeral', '.gradle', '.kotlin',
         '__pycache__', '.DS_Store', 'local.properties', 'Generated.xcconfig',
@@ -41,7 +41,7 @@ for name in PACKAGES:
         raise RuntimeError(f'Missing version-locked dependency: {name}')
 (OUTPUT / 'pubspec.yaml').write_text(PUBSPEC)
 for name in PACKAGES:
-    if name == 'file_viewer_flutter_linux':
+    if not name.startswith('file_viewer_flutter_assets'):
         continue
     assets = OUTPUT / 'packages' / name / 'assets'
     manifest = json.loads((assets / 'manifest.json').read_text())

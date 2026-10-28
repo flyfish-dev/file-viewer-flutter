@@ -2,6 +2,10 @@
 # Resource manifests hash the exact upstream bytes, including original CRLF.
 packages/**/assets/** -text -diff
 packages/**/THIRD_PARTY_LICENSES* -text -whitespace
+# Keep generated vendor sources reproducible without rewriting upstream spacing.
+packages/file_viewer_flutter_macos/lib/** -whitespace
+packages/file_viewer_flutter_macos/macos/** -whitespace
+packages/file_viewer_flutter_macos/LICENSE -text
 *.wasm -text
 *.pdf -text
 *.docx -text

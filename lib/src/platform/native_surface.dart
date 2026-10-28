@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart';
 import 'package:flutter_inappwebview_android/flutter_inappwebview_android.dart';
 import 'package:flutter_inappwebview_ios/flutter_inappwebview_ios.dart';
-import 'package:flutter_inappwebview_macos/flutter_inappwebview_macos.dart';
+import 'package:file_viewer_flutter_macos/file_viewer_flutter_macos.dart';
 import 'package:flutter_inappwebview_windows/flutter_inappwebview_windows.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -26,6 +26,7 @@ class NativeViewerSurface implements FileViewerSurface {
   PlatformHeadlessInAppWebView? _headless;
   PlatformInAppWebViewController? _controller;
   PlatformWebViewEnvironment? _environment;
+  late final InAppWebViewPlatform _platform;
   late ViewerResourceHost _resources;
   late BridgeMessageHandler _onMessage;
   bool _transferred = false;
@@ -38,12 +39,16 @@ class NativeViewerSurface implements FileViewerSurface {
   ) async {
     _resources = resources;
     _onMessage = onMessage;
-    if (InAppWebViewPlatform.instance == null) {
-      if (Platform.isAndroid) AndroidInAppWebViewPlatform.registerWith();
-      if (Platform.isIOS) IOSInAppWebViewPlatform.registerWith();
-      if (Platform.isMacOS) MacOSInAppWebViewPlatform.registerWith();
-      if (Platform.isWindows) WindowsInAppWebViewPlatform.registerWith();
-    }
+    _platform = switch (defaultTargetPlatform) {
+      TargetPlatform.android => AndroidInAppWebViewPlatform(),
+      TargetPlatform.iOS => IOSInAppWebViewPlatform(),
+      TargetPlatform.macOS => MacOSInAppWebViewPlatform(),
+      TargetPlatform.windows => WindowsInAppWebViewPlatform(),
+      _ => throw UnsupportedError('Unsupported native WebView platform.'),
+    };
+    // Use this SDK's factories even when the host app has registered another
+    // WebView implementation. Preserve that app's global platform selection.
+    InAppWebViewPlatform.instance ??= _platform;
     _trace('initialize');
     if (Platform.isWindows) {
       const channel = MethodChannel('file_viewer_flutter/runtime');
@@ -59,18 +64,20 @@ class NativeViewerSurface implements FileViewerSurface {
       final support = await getApplicationSupportDirectory();
       final dataDirectory = Directory('${support.path}/FileViewerWebView2');
       await dataDirectory.create(recursive: true);
-      _environment = await PlatformWebViewEnvironment.static().create(
-        settings: WebViewEnvironmentSettings(
-          userDataFolder: dataDirectory.path,
-          browserExecutableFolder: runtimePath,
-        ),
-      );
+      _environment = await _platform
+          .createPlatformWebViewEnvironmentStatic()
+          .create(
+            settings: WebViewEnvironmentSettings(
+              userDataFolder: dataDirectory.path,
+              browserExecutableFolder: runtimePath,
+            ),
+          );
     }
     if (_disposed) {
       await _environment?.dispose();
       return;
     }
-    _headless = PlatformHeadlessInAppWebView(
+    _headless = _platform.createPlatformHeadlessInAppWebView(
       PlatformHeadlessInAppWebViewCreationParams(
         initialUserScripts: UnmodifiableListView([
           UserScript(
@@ -146,7 +153,9 @@ class NativeViewerSurface implements FileViewerSurface {
     // Widget detachment disposes its Dart controller while the native view
     // survives. Own a separate handle for idle preloading and lifecycle work.
     final previous = _controller;
-    _controller = PlatformInAppWebViewController(controller.params);
+    _controller = _platform.createPlatformInAppWebViewController(
+      controller.params,
+    );
     previous?.dispose(isKeepAlive: true);
     if (controller.params.webviewParams
         is PlatformInAppWebViewWidgetCreationParams) {
@@ -220,7 +229,7 @@ class NativeViewerSurface implements FileViewerSurface {
   Widget buildView(BuildContext context) {
     final headless = _transferred ? null : _headless;
     return _PlatformViewer(
-      create: () => PlatformInAppWebViewWidget(
+      create: () => _platform.createPlatformInAppWebViewWidget(
         PlatformInAppWebViewWidgetCreationParams(
           keepAlive: _keepAlive,
           headlessWebView: headless,
@@ -260,7 +269,9 @@ class NativeViewerSurface implements FileViewerSurface {
     _disposed = true;
     _controller?.dispose();
     if (!_transferred) await _headless?.dispose();
-    await PlatformInAppWebViewController.static().disposeKeepAlive(_keepAlive);
+    await _platform
+        .createPlatformInAppWebViewControllerStatic()
+        .disposeKeepAlive(_keepAlive);
     await _environment?.dispose();
     _controller = null;
   }

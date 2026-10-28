@@ -131,6 +131,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0-dev.1"
+  file_viewer_flutter_macos:
+    dependency: "direct overridden"
+    description:
+      path: "../packages/file_viewer_flutter_macos"
+      relative: true
+    source: path
+    version: "0.1.0-dev.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -162,14 +169,6 @@ packages:
     description:
       name: flutter_inappwebview_ios
       sha256: ae8a78829398771be863aa3c8804a9d40728e1815e66c9c966f86d2cc3ae4fd9
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0-beta.3"
-  flutter_inappwebview_macos:
-    dependency: transitive
-    description:
-      name: flutter_inappwebview_macos
-      sha256: "545148cb5c46475ce669ab21621e9f2ad66e05f8e80b2cf49d4018879ab52393"
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0-beta.3"

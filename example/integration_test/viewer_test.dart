@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:file_viewer_flutter/file_viewer_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -21,6 +22,11 @@ void main() {
       final errors = <Object>[];
       final timings = <Map<String, Object?>>[];
       var documentReady = 0;
+      final elapsed = Stopwatch()..start();
+      void step(String label) => debugPrintSynchronously(
+        'FILE_VIEWER_STEP ${elapsed.elapsedMilliseconds}ms $label '
+        'lifecycle=${binding.lifecycleState} frames=${binding.framesEnabled}',
+      );
       await tester.pumpWidget(
         FileViewerHost(
           runtime: runtime,
@@ -78,7 +84,7 @@ void main() {
       }
 
       await waitFor(() => controller.isAttached && documentReady == 1);
-      debugPrint('FILE_VIEWER_STEP initial document');
+      step('initial document');
       final probe = await command(controller.probeRuntime);
       expect(probe['workerExecuted'], true);
       expect(probe['wasmResult'], 42);
@@ -101,16 +107,20 @@ void main() {
           (await command(controller.getCapabilities)).operations,
           isNotEmpty,
         );
-        debugPrint('FILE_VIEWER_STEP $filename');
+        step(filename);
       }
       final loadsBeforeReopen = events
           .where((event) => event == 'load-start')
           .length;
       for (var iteration = 0; iteration < 5; iteration++) {
+        step('hide ${iteration + 1}');
         visible.value = false;
         await tester.pump();
+        step('hide frame 1');
         await tester.pump();
+        step('hide frame 2');
         await waitFor(() => runtime.activeSessionCount == 0);
+        step('released ${iteration + 1}');
         final expected = documentReady + 1;
         final timer = Stopwatch()..start();
         visible.value = true;
@@ -121,7 +131,7 @@ void main() {
           'reopen': iteration + 1,
           'elapsedMs': timer.elapsedMilliseconds,
         });
-        debugPrint('FILE_VIEWER_STEP reopen ${iteration + 1}');
+        step('reopen ${iteration + 1}');
       }
       expect(
         events.where((event) => event == 'load-start').length,
@@ -136,14 +146,14 @@ void main() {
         () =>
             runtime.preload(const FileViewerSource.asset('assets/sample.pdf')),
       );
-      debugPrint('FILE_VIEWER_STEP idle preload');
+      step('idle preload');
       final preloadedExpected = documentReady + 1;
       source.value = const FileViewerSource.asset('assets/sample.pdf');
       visible.value = true;
       await waitFor(() => documentReady >= preloadedExpected);
       expect((await command(controller.probeRuntime))['wasmResult'], 42);
       await command(controller.close);
-      debugPrint('FILE_VIEWER_STEP close');
+      step('close');
       await command(
         () =>
             controller.load(const FileViewerSource.asset('assets/sample.txt')),
