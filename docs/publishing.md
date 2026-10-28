@@ -27,6 +27,19 @@ registry archive SHA-256 after publication. An optional `--proxy` accepts an
 existing loopback HTTP proxy; it does not configure system networking. Refresh
 expired credentials through the official `dart pub login` command.
 
+The qualification workflow has an optional manual base-archive transfer job
+for slow local upload links. Supply only the short-lived Google Storage form
+in the temporary `FILE_VIEWER_PUB_UPLOAD_FORM` repository secret. Its envelope
+contains `package`, `version`, `sourceCommit` and `upload` (`url` and `fields`);
+it must never contain OAuth credentials. Dispatch `qualify.yml` with
+`pub_archive_transfer=true` at that exact revision. The job creates a Dart-
+validated archive from public sources and uploads its bytes without finalizing
+publication. Download `pub-base-transfer`, compare every archive entry with the
+locally validated archive and resource manifests, then finalize locally with
+`tool/upload-pub-archive.py --transfer-receipt /path/to/transfer.json` and the
+downloaded archive. Delete the temporary secret after the job finishes. Keep
+the callback receipt private and check registry hashes before retrying.
+
 New packages initially belong to their uploader. Complete each package's
 publisher transfer in the authenticated pub.dev Admin page, selecting
 `flyfish.dev`. Verify the result through the package's public publisher endpoint.

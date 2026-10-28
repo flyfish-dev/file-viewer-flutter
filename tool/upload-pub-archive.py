@@ -21,6 +21,8 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('package')
 parser.add_argument('archive', type=Path)
 parser.add_argument('--proxy', help='Use an existing local HTTP proxy without changing system settings.')
+parser.add_argument('--transfer-receipt', type=Path,
+                    help='Finalize a CI storage transfer after verifying its downloaded archive locally.')
 args = parser.parse_args()
 release = json.loads((OUTPUT / 'staging.json').read_text())
 allowed = {'file_viewer_flutter', 'file_viewer_flutter_assets',
@@ -84,44 +86,56 @@ def pub_request(url):
     with client.open(request, timeout=60) as response:
         return json.load(response)
 
-parameters = pub_request('https://pub.dev/api/packages/versions/new')
-target = urlsplit(parameters['url'])
-if target.scheme != 'https' or not (target.netloc == 'storage.googleapis.com' or
-                                   target.netloc.endswith('.storage.googleapis.com')):
-    raise RuntimeError('Unexpected pub.dev storage upload origin.')
-upload_url = parameters['url']
-headers = OUTPUT / f'{args.package}.upload-headers'
-body = OUTPUT / f'{args.package}.upload-response'
-quote = lambda value: json.dumps(str(value), ensure_ascii=False)
-configuration = [
-    'url = ' + quote(upload_url), 'http2', 'silent', 'show-error',
-    'connect-timeout = 30', 'max-time = 7200',
-    'dump-header = ' + quote(headers), 'output = ' + quote(body),
-    'write-out = "%{http_code} %{speed_upload}\\n"',
-]
-if args.proxy:
-    proxy = urlsplit(args.proxy)
-    if proxy.scheme != 'http' or proxy.hostname not in {'127.0.0.1', 'localhost'} or not proxy.port:
-        raise RuntimeError('Only an explicitly configured loopback HTTP proxy is accepted.')
-    configuration.append('proxy = ' + quote(args.proxy))
-for key, value in parameters['fields'].items():
-    if not isinstance(key, str) or not isinstance(value, str):
-        raise RuntimeError('Unexpected storage upload field type.')
-    configuration.append('form-string = ' + quote(f'{key}={value}'))
-configuration.append('form = ' + quote(f'file=@{archive};filename=package.tar.gz;type=application/octet-stream'))
-print(json.dumps({'package': args.package, 'phase': 'uploading',
-                  'archiveBytes': archive.stat().st_size, 'sha256': archive_hash,
-                  'storageHost': urlsplit(upload_url).hostname}), flush=True)
-upload = subprocess.run(['curl', '--no-insecure', '--config', '-'],
-                        input='\n'.join(configuration) + '\n', text=True,
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-if upload.returncode:
-    raise RuntimeError(f'Package transfer failed with curl exit {upload.returncode}.')
-locations = [line.split(':', 1)[1].strip() for line in headers.read_text().splitlines()
-             if line.lower().startswith('location:')]
-if not locations:
-    raise RuntimeError(f'Upload returned no finalize URL; HTTP result: {upload.stdout.strip()}')
-result = pub_request(locations[-1])
+if args.transfer_receipt:
+    receipt = json.loads(args.transfer_receipt.read_text())
+    expected = {'package': args.package, 'version': release['version'],
+                'sourceCommit': release['sourceCommit'], 'archiveSha256': archive_hash,
+                'archiveBytes': archive.stat().st_size}
+    if any(receipt.get(key) != value for key, value in expected.items()):
+        raise RuntimeError('The storage receipt differs from the locally verified archive or revision.')
+    finalize_url = receipt['finalizeUrl']
+    transfer_result = receipt['transferResult']
+else:
+    parameters = pub_request('https://pub.dev/api/packages/versions/new')
+    target = urlsplit(parameters['url'])
+    if target.scheme != 'https' or not (target.netloc == 'storage.googleapis.com' or
+                                       target.netloc.endswith('.storage.googleapis.com')):
+        raise RuntimeError('Unexpected pub.dev storage upload origin.')
+    upload_url = parameters['url']
+    headers = OUTPUT / f'{args.package}.upload-headers'
+    body = OUTPUT / f'{args.package}.upload-response'
+    quote = lambda value: json.dumps(str(value), ensure_ascii=False)
+    configuration = [
+        'url = ' + quote(upload_url), 'http2', 'silent', 'show-error',
+        'connect-timeout = 30', 'max-time = 7200',
+        'dump-header = ' + quote(headers), 'output = ' + quote(body),
+        'write-out = "%{http_code} %{speed_upload}\\n"',
+    ]
+    if args.proxy:
+        proxy = urlsplit(args.proxy)
+        if proxy.scheme != 'http' or proxy.hostname not in {'127.0.0.1', 'localhost'} or not proxy.port:
+            raise RuntimeError('Only an explicitly configured loopback HTTP proxy is accepted.')
+        configuration.append('proxy = ' + quote(args.proxy))
+    for key, value in parameters['fields'].items():
+        if not isinstance(key, str) or not isinstance(value, str):
+            raise RuntimeError('Unexpected storage upload field type.')
+        configuration.append('form-string = ' + quote(f'{key}={value}'))
+    configuration.append('form = ' + quote(f'file=@{archive};filename=package.tar.gz;type=application/octet-stream'))
+    print(json.dumps({'package': args.package, 'phase': 'uploading',
+                      'archiveBytes': archive.stat().st_size, 'sha256': archive_hash,
+                      'storageHost': urlsplit(upload_url).hostname}), flush=True)
+    upload = subprocess.run(['curl', '--no-insecure', '--config', '-'],
+                            input='\n'.join(configuration) + '\n', text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if upload.returncode:
+        raise RuntimeError(f'Package transfer failed with curl exit {upload.returncode}.')
+    locations = [line.split(':', 1)[1].strip() for line in headers.read_text().splitlines()
+                 if line.lower().startswith('location:')]
+    if not locations:
+        raise RuntimeError(f'Upload returned no finalize URL; HTTP result: {upload.stdout.strip()}')
+    finalize_url = locations[-1]
+    transfer_result = upload.stdout.strip()
+result = pub_request(finalize_url)
 if 'success' not in result:
     raise RuntimeError('pub.dev did not confirm successful publication.')
 with urllib.request.urlopen(
@@ -141,10 +155,10 @@ record = {'package': args.package, 'version': release['version'],
           'filesVerified': len(names), 'registry': published,
           'publisherId': ownership.get('publisherId'),
           'publisherTransferRequired': ownership.get('publisherId') is None,
-          'transferResult': upload.stdout.strip()}
+          'transferResult': transfer_result}
 (OUTPUT / f'{args.package}.published.json').write_text(json.dumps(record, indent=2) + '\n')
 print(json.dumps({'package': args.package, 'phase': 'published',
                   'version': release['version'], 'archiveSha256': archive_hash,
                   'publisherId': ownership.get('publisherId'),
                   'publisherTransferRequired': ownership.get('publisherId') is None,
-                  'transfer': upload.stdout.strip()}), flush=True)
+                  'transfer': transfer_result}), flush=True)
