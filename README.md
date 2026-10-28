@@ -4,6 +4,8 @@ An offline Flutter document viewer, backed by the public [File Viewer](https://g
 
 **Development preview: `0.1.0-dev.1`.** Android, iOS, Web, Windows, macOS and Linux are the delivery targets. A target is supported only after its native build, document rendering and lifecycle tests pass. See [the qualification matrix](docs/qualification.md); platform declarations alone are not test evidence.
 
+The [delivery and stable-release plan (简体中文)](docs/delivery-plan.zh-CN.md) covers integration, prewarming, platform ownership, performance acceptance and the deferred pub.dev release.
+
 ## Integrate
 
 Until the package family is published on pub.dev, use a complete local SDK bundle. A checkout uses the included dependency overrides for development:
