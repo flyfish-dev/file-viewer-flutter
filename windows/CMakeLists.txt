@@ -21,6 +21,11 @@ function(file_viewer_configure_windows_adapter)
     message(FATAL_ERROR "The locked Windows WebView adapter target is missing")
   endif()
   target_compile_features(flutter_inappwebview_windows_plugin PRIVATE cxx_std_20)
+  if(MSVC)
+    # This pinned adapter still relies on the MSVC extensions used by its
+    # original C++17 build. Keep that lookup mode while using std coroutines.
+    target_compile_options(flutter_inappwebview_windows_plugin PRIVATE /permissive)
+  endif()
 endfunction()
 cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL file_viewer_configure_windows_adapter)
 
