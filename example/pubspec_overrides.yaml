@@ -1,0 +1,12 @@
+dependency_overrides:
+  file_viewer_flutter_assets:
+    path: ../packages/file_viewer_flutter_assets
+  file_viewer_flutter_assets_cad:
+    path: ../packages/file_viewer_flutter_assets_cad
+  file_viewer_flutter_assets_drawing:
+    path: ../packages/file_viewer_flutter_assets_drawing
+  file_viewer_flutter_assets_typst:
+    path: ../packages/file_viewer_flutter_assets_typst
+  file_viewer_flutter_linux:
+    path: ../packages/file_viewer_flutter_linux
+

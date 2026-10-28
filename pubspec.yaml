@@ -1,0 +1,43 @@
+name: file_viewer_flutter
+description: Offline File Viewer widget with application-scoped warm-up and reusable document sessions.
+version: 0.1.0-dev.1
+homepage: https://file-viewer.app
+repository: https://github.com/flyfish-dev/file-viewer-flutter
+issue_tracker: https://github.com/flyfish-dev/file-viewer-flutter/issues
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+  flutter: '>=3.47.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  # Use only the required federated adapters. The umbrella package also brings
+  # a second Linux engine; Linux is provided by our offline CEF adapter.
+  flutter_inappwebview_platform_interface: 1.4.0-beta.3
+  flutter_inappwebview_android: 1.2.0-beta.3
+  flutter_inappwebview_ios: 1.2.0-beta.3
+  flutter_inappwebview_macos: 1.2.0-beta.3
+  flutter_inappwebview_windows: 0.7.0-beta.3
+  web: ^1.1.1
+  crypto: ^3.0.6
+  mime: ^2.0.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  xml: ^6.6.1
+  file_viewer_flutter_assets: 0.1.0-dev.1
+  file_viewer_flutter_assets_cad: 0.1.0-dev.1
+  file_viewer_flutter_assets_drawing: 0.1.0-dev.1
+  file_viewer_flutter_assets_typst: 0.1.0-dev.1
+  file_viewer_flutter_linux: 0.1.0-dev.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
+  plugin:
+    platforms:
+      windows:
+        pluginClass: FileViewerFlutterPluginCApi
+

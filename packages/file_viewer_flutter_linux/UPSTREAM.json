@@ -1,0 +1,16 @@
+{
+  "upstream": "webview_cef",
+  "version": "0.6.2",
+  "archive": "https://pub.dev/api/archives/webview_cef-0.6.2.tar.gz",
+  "sha256": "1e028859e6fe4f52a82349a0acaa6594c1bd8317738df5764fd4365d6aebf6cc",
+  "changes": [
+    "Linux-only platform registration and namespace",
+    "explicit host runner setup",
+    "verified runtime preparation",
+    "Dart 3.13 formal parameter compatibility",
+    "preserve web security and sandbox defaults",
+    "main-frame navigation and bridge restrictions",
+    "renderer process termination event",
+    "retained view state cleanup"
+  ]
+}

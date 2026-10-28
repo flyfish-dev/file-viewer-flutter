@@ -1,0 +1,145 @@
+name: Qualify development preview
+
+on:
+  push:
+    branches: [main, 'feature/**', 'fix/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qualification-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_REVISION: 9584c6713b324636289d067944a46fd6b49df14b
+  FILE_VIEWER_NATIVE_CACHE_DIR: ${{ github.workspace }}/.build/native-archives
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install pinned Flutter
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" checkout "$FLUTTER_REVISION"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get
+      - run: dart analyze lib bin test
+      - run: flutter test --no-pub
+      - run: npm ci --prefix runtime
+      - run: npm test --prefix runtime
+      - name: Verify generated resource bytes and manifests
+        run: |
+          node tool/build-runtime.mjs
+          git diff --exit-code -- packages/file_viewer_flutter_assets*
+      - name: Build local SDK
+        run: python3 tool/bundle-sdk.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: local-sdk
+          path: .release/*sdk.tar.gz*
+          retention-days: 14
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+          - runner: windows-2025
+            platform: windows
+            arch: x64
+          - runner: windows-11-arm
+            platform: windows
+            arch: arm64
+          - runner: macos-15
+            platform: macos
+            arch: arm64
+          - runner: macos-15-intel
+            platform: macos
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 50
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libasound2-dev libnss3-dev libxss-dev libgbm-dev xvfb
+      - name: Install pinned Flutter
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" checkout "$FLUTTER_REVISION"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .build/native-archives
+          key: native-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('**/native-runtime-lock.json') }}
+      - run: flutter config --enable-linux-desktop --enable-macos-desktop --enable-windows-desktop
+      - run: flutter pub get
+      - run: flutter pub get
+        working-directory: example
+      - run: dart run file_viewer_flutter:setup --project . --platform ${{ matrix.platform }} --apply
+        working-directory: example
+      - run: flutter build ${{ matrix.platform }} --debug
+        working-directory: example
+      - name: Real Linux CEF integration (sandbox remains enabled)
+        if: matrix.platform == 'linux'
+        run: xvfb-run -a flutter test integration_test/viewer_test.dart -d linux --no-pub
+        working-directory: example
+      - name: Real Windows/macOS integration
+        if: matrix.platform != 'linux'
+        run: flutter test integration_test/viewer_test.dart -d ${{ matrix.platform }} --no-pub
+        working-directory: example
+      - name: Verify Windows runtime signature
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $engines = Get-ChildItem example/build/windows -Filter msedgewebview2.exe -Recurse
+          if ($engines.Count -lt 1) { throw 'Bundled runtime was not installed.' }
+          foreach ($engine in $engines) {
+            $signature = Get-AuthenticodeSignature $engine.FullName
+            if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') {
+              throw 'Bundled WebView2 signature is invalid.'
+            }
+          }
+
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install pinned Flutter
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" checkout "$FLUTTER_REVISION"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get
+      - run: flutter pub get
+        working-directory: example
+      - run: npm ci --prefix runtime
+      - run: npx --prefix runtime playwright install --with-deps chromium
+      - run: flutter build web --no-web-resources-cdn
+        working-directory: example
+      - run: node tool/verify-web.mjs
+      - run: flutter build web --wasm --no-web-resources-cdn
+        working-directory: example
+      - run: node tool/verify-web.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: .release/web
+          retention-days: 14

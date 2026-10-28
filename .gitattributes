@@ -1,0 +1,9 @@
+* text=auto eol=lf
+# Resource manifests hash the exact upstream bytes, including original CRLF.
+packages/**/assets/** -text -diff
+packages/**/THIRD_PARTY_LICENSES* -text -whitespace
+*.wasm -text
+*.pdf -text
+*.docx -text
+*.xlsx -text
+*.pptx -text
