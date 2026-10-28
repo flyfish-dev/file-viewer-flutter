@@ -14,3 +14,13 @@ set(file_viewer_flutter_bundled_libraries "" PARENT_SCOPE)
 include("${CMAKE_CURRENT_SOURCE_DIR}/runtime.cmake")
 file_viewer_prepare_webview2()
 
+# The locked adapter's C++/WinRT headers select standard coroutines in C++20.
+# Configure only that target after Flutter has added every plugin directory.
+function(file_viewer_configure_windows_adapter)
+  if(NOT TARGET flutter_inappwebview_windows_plugin)
+    message(FATAL_ERROR "The locked Windows WebView adapter target is missing")
+  endif()
+  target_compile_features(flutter_inappwebview_windows_plugin PRIVATE cxx_std_20)
+endfunction()
+cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL file_viewer_configure_windows_adapter)
+

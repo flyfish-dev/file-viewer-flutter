@@ -162,5 +162,6 @@ void main() {
       source.dispose();
       visible.dispose();
     },
+    timeout: const Timeout(Duration(minutes: 3)),
   );
 }
