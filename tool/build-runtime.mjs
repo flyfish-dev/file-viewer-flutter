@@ -10,7 +10,9 @@ const runtime = join(root, 'runtime');
 const require = createRequire(join(runtime, 'package.json'));
 const { build } = await import(require.resolve('esbuild'));
 const source = join(root, '.build/runtime');
-const version = JSON.parse(await readFile(join(runtime, 'package.json'), 'utf8')).version;
+const runtimeMetadata = JSON.parse(await readFile(join(runtime, 'package.json'), 'utf8'));
+const version = runtimeMetadata.version;
+const generatedAt = new Date(Number(process.env.SOURCE_DATE_EPOCH ?? runtimeMetadata.sourceDateEpoch) * 1000).toISOString();
 const upstreamPackage = require.resolve('@file-viewer/web-full/package.json');
 const upstreamMetadata = JSON.parse(await readFile(upstreamPackage, 'utf8'));
 const upstreamVersion = upstreamMetadata.version;
@@ -21,6 +23,18 @@ const copy = spawnSync(process.execPath,
   [join(dirname(upstreamPackage), upstreamMetadata.bin['file-viewer-copy-assets']), source, '--no-clean', '--json'],
   { cwd: runtime, encoding: 'utf8' });
 if (copy.status !== 0) throw new Error(copy.stderr || copy.stdout);
+// The public copy CLI emits a wall-clock timestamp. Keep build receipts while
+// canonicalizing their date to the pinned upstream release's source epoch.
+for (const file of ['file-viewer-copy-assets.manifest.json', 'flyfish-viewer-assets.json']) {
+  const metadata = JSON.parse(await readFile(join(source, file), 'utf8'));
+  metadata.generatedAt = generatedAt;
+  await writeFile(join(source, file), `${JSON.stringify(metadata, null, 2)}\n`);
+}
+const receiptPath = join(source, 'file-viewer-copy-assets.receipt.json');
+const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
+receipt.installedAt = generatedAt;
+receipt.assetManifestSha256 = createHash('sha256').update(await readFile(join(source, 'file-viewer-copy-assets.manifest.json'))).digest('hex');
+await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
 const upstreamDist = join(dirname(require.resolve('@file-viewer/web-full/package.json')), 'dist');
 for (const file of ['THIRD_PARTY_LICENSES.txt', 'THIRD_PARTY_LICENSES.assets.json']) {
   await cp(join(upstreamDist, file), join(source, file));

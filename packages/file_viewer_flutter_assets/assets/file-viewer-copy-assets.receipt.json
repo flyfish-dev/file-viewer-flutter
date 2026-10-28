@@ -31,7 +31,7 @@
     "spreadsheet-openxml",
     "typst"
   ],
-  "installedAt": "2026-10-28T09:09:02.369Z",
+  "installedAt": "2026-10-27T08:46:33.000Z",
   "files": [
     {
       "path": "flyfish-viewer-manifest.json",
@@ -25553,5 +25553,5 @@
       ]
     }
   ],
-  "assetManifestSha256": "6c662aace76bcde73824d5dd0447aa513dce52e611955e0e6436f4d688364903"
+  "assetManifestSha256": "98551db5a1102502d1c29f6775165c3cd0355b643be4b521b8e800170e269d37"
 }

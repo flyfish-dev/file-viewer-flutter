@@ -36,6 +36,8 @@ All native targets currently use the same loopback routing. An Android `WebViewA
 
 The adapter consumes immutable public npm release archives only. Rebuilding assets does not copy files from the private File Viewer source repository. Four generated Flutter asset packages keep each pub archive below its size budget. Their package versions, upstream version and protocol must match.
 
+Copy receipts use the checked-in source epoch of the pinned upstream npm release instead of the build machine's wall clock. Their manifest hashes are recomputed after normalization. SDK tar/gzip timestamps, ownership and modes are canonicalized as well; actual qualification dates remain in the evidence reports.
+
 Windows and Linux build scripts verify locked runtime archive hashes before extraction. A cache-only build fails if the requested archive is absent. Keep extracted engine license files in the final bundle. Linux sandbox startup and renderer-process recovery must pass on each qualified distribution; no `--no-sandbox` qualification workaround is permitted.
 
 The Linux bundle installs CEF's `chrome-sandbox` helper as an executable beside `libcef.so`. Hosts permitting unprivileged user namespaces can use that sandbox route. Distributions restricting it require a normal privileged installer to assign the official helper root ownership and mode `4755`; the application does not change host security policy or silently elevate privileges. Linux CI prepares that helper on its disposable runner and runs the prebuilt test binary without reinstalling it.

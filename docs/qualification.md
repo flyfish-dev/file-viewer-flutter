@@ -7,9 +7,9 @@ This is a development preview. A platform metadata entry is not a support guaran
 | Web | JS and Dart WASM release builds; Chrome 156 renders all five fixtures with external HTTP blocked; Worker/WASM executes | Retained-session lifecycle and representative mobile browsers |
 | iOS | iPhone 17 Pro simulator / iOS 26.4: five fixtures, Worker/WASM, five reattachments without parsing again, idle PDF preload, close/reload | Physical iPhone/iPad, memory pressure, background recovery and representative format corpus |
 | Android | Xiaomi 12 Pro / API 35 / WebView 131: five fixtures, Worker/WASM, five reattachments without parsing again, idle PDF preload, close/reload | Older/current WebView matrix, memory pressure, background recovery and representative format corpus |
-| macOS | Apple Silicon / macOS 26 / Xcode 27: native build, five fixtures, Worker/WASM, five reattachments, idle PDF preload and close/reload | Intel matrix, memory pressure, background recovery and representative format corpus |
+| macOS | Apple Silicon / macOS 27.0.1 / Xcode 27: native build, five fixtures, Worker/WASM, five reattachments, idle PDF preload and close/reload; macOS 15 ARM64 CI also passes | Intel matrix, memory pressure, background recovery and representative format corpus |
 | Windows | Fixed WebView2 runtime archive hashes locked for x64/ARM64 | Native builds, signed-runtime checks, fixtures and lifecycle |
-| Linux | CEF archive hashes locked for x64/ARM64; sandbox enabled in adapter | Native builds, sandbox startup, fixtures and lifecycle on named distributions |
+| Linux | Ubuntu 24.04 x64/ARM64 CI: native builds, sandbox startup, five fixtures, Worker/WASM, five reattachments, idle PDF preload and close/reload | More distributions, real desktop visual checks, memory pressure and representative format corpus |
 
 Flutter `3.47.4` / Dart `3.13.3` is the current pinned build toolchain. Initial device targets are Android 24+, iOS 15+, macOS 12+, Windows 10+, and explicitly qualified Linux distributions. File formats, memory capacity, codecs and system WebView versions remain part of the compatibility contract.
 

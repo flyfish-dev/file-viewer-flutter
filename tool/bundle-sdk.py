@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build a complete path-dependency SDK from reviewed source and asset shards."""
 import hashlib
+import gzip
 import json
 from pathlib import Path
 import re
@@ -54,8 +55,18 @@ for path in sorted(OUTPUT.rglob('*')):
                         'sha256': hashlib.sha256(data).hexdigest()})
 (OUTPUT / 'SDK-MANIFEST.json').write_text(json.dumps({'version': VERSION, 'files': entries}, indent=2) + '\n')
 archive = ROOT / '.release' / f'file_viewer_flutter-{VERSION}-sdk.tar.gz'
-with tarfile.open(archive, 'w:gz') as package:
-    package.add(OUTPUT, arcname=OUTPUT.name)
+epoch = int(json.loads((ROOT / 'runtime/package.json').read_text())['sourceDateEpoch'])
+def canonical(info):
+    info.uid = info.gid = 0
+    info.uname = info.gname = ''
+    info.mtime = epoch
+    info.mode = 0o755 if info.isdir() or info.mode & 0o111 else 0o644
+    info.pax_headers = {}
+    return info
+with archive.open('wb') as destination:
+    with gzip.GzipFile(fileobj=destination, mode='wb', filename='', mtime=epoch) as compressed:
+        with tarfile.open(fileobj=compressed, mode='w', format=tarfile.PAX_FORMAT) as package:
+            package.add(OUTPUT, arcname=OUTPUT.name, filter=canonical)
 digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 archive.with_suffix(archive.suffix + '.sha256').write_text(f'{digest}  {archive.name}\n')
 print(json.dumps({'archive': str(archive), 'sha256': digest, 'files': len(entries),
