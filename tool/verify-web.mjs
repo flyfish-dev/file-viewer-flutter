@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const webRoot = resolve(process.argv[2] || resolve(root, 'example/build/web'));
-const output = resolve(root, '.release/web');
+const output = resolve(process.argv[3] || resolve(root, '.release/web'));
 await mkdir(output, { recursive: true });
 const require = createRequire(resolve(root, 'runtime/package.json'));
 const { chromium } = require('playwright');
