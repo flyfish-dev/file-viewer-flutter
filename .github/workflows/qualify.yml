@@ -5,6 +5,11 @@ on:
     branches: [main, 'feature/**', 'fix/**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      pub_archive_transfer:
+        description: Transfer public base-resource bytes using a temporary storage form (no pub credentials)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,6 +24,7 @@ env:
 
 jobs:
   checks:
+    if: ${{ !inputs.pub_archive_transfer }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -48,6 +54,7 @@ jobs:
           retention-days: 14
 
   desktop:
+    if: ${{ !inputs.pub_archive_transfer }}
     strategy:
       fail-fast: false
       matrix:
@@ -131,6 +138,7 @@ jobs:
           }
 
   web:
+    if: ${{ !inputs.pub_archive_transfer }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -157,3 +165,26 @@ jobs:
           name: browser-evidence
           path: .release/web
           retention-days: 14
+
+  pub-archive-transfer:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.pub_archive_transfer }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Flutter
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" checkout "$FLUTTER_REVISION"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Validate and transfer public archive (publication remains local)
+        env:
+          PUB_UPLOAD_FORM: ${{ secrets.FILE_VIEWER_PUB_UPLOAD_FORM }}
+        run: python3 tool/stage-pub-transfer.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pub-base-transfer
+          path: .release/pub-transfer
+          retention-days: 1
