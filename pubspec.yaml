@@ -4,6 +4,20 @@ version: 0.1.0-dev.1
 homepage: https://file-viewer.app
 repository: https://github.com/flyfish-dev/file-viewer-flutter
 issue_tracker: https://github.com/flyfish-dev/file-viewer-flutter/issues
+documentation: https://github.com/flyfish-dev/file-viewer-flutter/blob/main/README.md
+topics:
+  - file-viewer
+  - pdf
+  - office
+  - offline
+  - flutter
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
 environment:
   sdk: '>=3.13.0 <4.0.0'
   flutter: '>=3.47.0'

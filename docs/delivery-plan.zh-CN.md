@@ -2,13 +2,20 @@
 
 ## 目标与当前交付
 
-独立仓库维护 Flutter API、平台适配、资源分发和设备验证，共享公共 File Viewer 渲染内核。目标平台为 Android、iOS、Web、Windows、macOS、Linux；具体已验证范围见 [兼容性矩阵](qualification.md)。当前交付 `0.1.0-dev.1` 本地开发预览 SDK，pub.dev 发布按用户决定留待账号登录后进行。
+独立仓库维护 Flutter API、平台适配、资源分发和设备验证，共享公共 File Viewer 渲染内核。目标平台为 Android、iOS、Web、Windows、macOS、Linux；具体已验证范围见 [兼容性矩阵](qualification.md)。开发预览版本为 `0.1.0-dev.1`，提供本地 SDK 和 pub.dev 分发；发布者为 `flyfish.dev`，在线版本以 pub.dev 注册表为准。
 
 本地 SDK 包含入口包、四个离线资源包、macOS/WKWebView 与 Linux/CEF 适配包，以及六个平台的示例工程。SDK 内部依赖已改为本地路径；客户使用 Flutter 工具链即可接入，不需要 Node.js。约 225 MiB 前端资源随应用打包。Windows WebView2、Linux CEF 在构建时按校验锁获取并随应用安装，运行时不下载引擎。完全断网构建需事先准备 Flutter/Pub 依赖、原生构建依赖和锁定的引擎归档缓存。
 
 ## 一次配置，两处接入
 
-解压 SDK，在客户应用的 `pubspec.yaml` 添加路径依赖：
+通过 pub.dev 接入，在客户应用的 `pubspec.yaml` 添加：
+
+```yaml
+dependencies:
+  file_viewer_flutter: 0.1.0-dev.1
+```
+
+也可以解压本地 SDK，改用路径依赖：
 
 ```yaml
 dependencies:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate isolated pub packages; ancestor monorepo ignores must not hide them."""
 import argparse
+from contextlib import nullcontext
 import json
 from pathlib import Path
 import shutil
@@ -9,6 +10,8 @@ import tempfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--flutter', default='flutter')
+parser.add_argument('--staging-directory', type=Path,
+                    help='Keep validated packages in an empty directory outside the repository.')
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
 output = root / '.release' / 'pub-dry-run'
@@ -17,7 +20,16 @@ packages = sorted((root / 'packages').glob('file_viewer_flutter_*'))
 skip = shutil.ignore_patterns('.dart_tool', 'build', 'pubspec.lock',
                               'pubspec_overrides.yaml', '.git', '__pycache__')
 results = []
-with tempfile.TemporaryDirectory(prefix='file-viewer-pub-') as temporary:
+if args.staging_directory:
+    staging_path = args.staging_directory.resolve()
+    if staging_path.is_relative_to(root) or staging_path == root.parent:
+        raise RuntimeError('Publish staging must be outside the repository.')
+    staging_path.mkdir(parents=True, exist_ok=True)
+    if any(staging_path.iterdir()):
+        raise RuntimeError('Publish staging must start empty.')
+context = (nullcontext(str(staging_path)) if args.staging_directory else
+           tempfile.TemporaryDirectory(prefix='file-viewer-pub-'))
+with context as temporary:
     staging = Path(temporary)
     for package in packages:
         shutil.copytree(package, staging / package.name, ignore=skip, symlinks=True)
@@ -50,5 +62,8 @@ with tempfile.TemporaryDirectory(prefix='file-viewer-pub-') as temporary:
                   'summary': lines[-6:]}
         results.append(record)
         print(json.dumps(record), flush=True)
+    if args.staging_directory:
+        print(json.dumps({'stagingDirectory': str(staging),
+                          'packages': [package.name for package in packages] + [main.name]}), flush=True)
 (output / 'CURRENT.json').write_text(json.dumps(results, indent=2) + '\n')
 raise SystemExit(any(result['exitCode'] for result in results))

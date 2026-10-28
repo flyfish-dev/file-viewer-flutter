@@ -4,11 +4,18 @@ An offline Flutter document viewer, backed by the public [File Viewer](https://g
 
 **Development preview: `0.1.0-dev.1`.** Android, iOS, Web, Windows, macOS and Linux are the delivery targets. A target is supported only after its native build, document rendering and lifecycle tests pass. See [the qualification matrix](docs/qualification.md); platform declarations alone are not test evidence.
 
-The [delivery and stable-release plan (简体中文)](docs/delivery-plan.zh-CN.md) covers integration, prewarming, platform ownership, performance acceptance and the deferred pub.dev release.
+The [delivery and stable-release plan (简体中文)](docs/delivery-plan.zh-CN.md) covers integration, prewarming, platform ownership, performance acceptance and pub.dev distribution.
 
 ## Integrate
 
-Until the package family is published on pub.dev, use a complete local SDK bundle. A checkout uses the included dependency overrides for development:
+Add the development-preview package from pub.dev:
+
+```yaml
+dependencies:
+  file_viewer_flutter: 0.1.0-dev.1
+```
+
+The package family is maintained under the [flyfish.dev publisher](https://pub.dev/publishers/flyfish.dev). A complete local SDK bundle is also available. A repository checkout uses the included dependency overrides for development.
 
 For a delivered SDK archive, extract it next to your application and add this dependency; the archive rewrites all internal resource dependencies to local paths:
 
