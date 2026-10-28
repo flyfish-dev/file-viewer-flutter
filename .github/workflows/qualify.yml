@@ -29,7 +29,7 @@ jobs:
           git -C "$RUNNER_TEMP/flutter" checkout "$FLUTTER_REVISION"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
       - run: flutter pub get
-      - run: dart analyze lib bin test
+      - run: flutter analyze --no-pub
       - run: flutter test --no-pub
       - run: npm ci --prefix runtime
       - run: npm test --prefix runtime
@@ -39,6 +39,8 @@ jobs:
           git diff --exit-code -- packages/file_viewer_flutter_assets*
       - name: Build local SDK
         run: python3 tool/bundle-sdk.py
+      - name: Validate isolated pub archives
+        run: python3 tool/check-pub.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: local-sdk
@@ -94,10 +96,22 @@ jobs:
       - run: dart run file_viewer_flutter:setup --project . --platform ${{ matrix.platform }} --apply
         working-directory: example
       - run: flutter build ${{ matrix.platform }} --debug
+        if: matrix.platform != 'linux'
         working-directory: example
+      - name: Build Linux integration binary
+        if: matrix.platform == 'linux'
+        run: flutter build linux --debug --target integration_test/viewer_test.dart
+        working-directory: example
+      - name: Prepare the verified CEF sandbox helper
+        if: matrix.platform == 'linux'
+        run: |
+          helper="example/build/linux/${{ matrix.arch }}/debug/bundle/lib/chrome-sandbox"
+          test -x "$helper"
+          sudo chown root:root "$helper"
+          sudo chmod 4755 "$helper"
       - name: Real Linux CEF integration (sandbox remains enabled)
         if: matrix.platform == 'linux'
-        run: xvfb-run -a flutter test integration_test/viewer_test.dart -d linux --no-pub
+        run: xvfb-run -a flutter drive --driver test_driver/integration_test.dart --target integration_test/viewer_test.dart --use-application-binary build/linux/${{ matrix.arch }}/debug/bundle/file_viewer_flutter_example --debug -d linux --no-pub
         working-directory: example
       - name: Real Windows/macOS integration
         if: matrix.platform != 'linux'

@@ -38,6 +38,8 @@ The adapter consumes immutable public npm release archives only. Rebuilding asse
 
 Windows and Linux build scripts verify locked runtime archive hashes before extraction. A cache-only build fails if the requested archive is absent. Keep extracted engine license files in the final bundle. Linux sandbox startup and renderer-process recovery must pass on each qualified distribution; no `--no-sandbox` qualification workaround is permitted.
 
+The Linux bundle installs CEF's `chrome-sandbox` helper as an executable beside `libcef.so`. Hosts permitting unprivileged user namespaces can use that sandbox route. Distributions restricting it require a normal privileged installer to assign the official helper root ownership and mode `4755`; the application does not change host security policy or silently elevate privileges. Linux CI prepares that helper on its disposable runner and runs the prebuilt test binary without reinstalling it.
+
 ## Stable release gates
 
 1. Analyze and meaningful Dart/protocol/resource-server/setup tests pass.

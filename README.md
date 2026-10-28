@@ -79,6 +79,8 @@ npm ci
 node --test test/*.test.mjs
 cd ..
 node tool/build-runtime.mjs
+python3 tool/check-pub.py
+python3 tool/bundle-sdk.py
 ```
 
 Run `example/integration_test/viewer_test.dart` on actual platform WebViews. `tool/verify-web.mjs` tests a built Flutter Web application in Chrome with external HTTP requests blocked. Generated evidence and screenshots stay under `.release/` and are excluded from source control. [Architecture and release gates](docs/architecture.md) describe resource routing, lifecycle, security boundaries and remaining qualification work.

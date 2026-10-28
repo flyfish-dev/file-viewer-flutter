@@ -682,13 +682,11 @@ void WebviewHandler::sendJavaScriptChannelCallBack(const bool error, const std::
     args->SetString(2, result);
     auto bit = browser_map_.find(browserId);
     if(bit != browser_map_.end()){
-        int64_t frameIdInt = atoll(frameId.c_str());
-
         CefRefPtr<CefFrame> frame = bit->second.browser->GetMainFrame();
 
         // CefFrame::GetIdentifier() returns a string identifier in current CEF
         // (since CEF 122) on every platform.
-        bool identifierMatch = std::stoll(frame->GetIdentifier().ToString()) == frameIdInt;
+        bool identifierMatch = frame && frame->GetIdentifier().ToString() == frameId;
         if (identifierMatch)
         {
             frame->SendProcessMessage(PID_RENDERER, message);

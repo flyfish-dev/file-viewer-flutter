@@ -49,8 +49,9 @@ void main() {
         final deadline = DateTime.now().add(const Duration(seconds: 90));
         while (!ready()) {
           if (errors.isNotEmpty) fail('Preview failed: ${errors.first}');
-          if (DateTime.now().isAfter(deadline))
+          if (DateTime.now().isAfter(deadline)) {
             fail('Timed out waiting for document; events: $events');
+          }
           await tester.pump(const Duration(milliseconds: 100));
         }
       }

@@ -26,7 +26,7 @@ class WebviewManager extends ValueNotifier<bool> {
 
   bool? _hasNativeKeySupport;
 
-  get ready => _creatingCompleter.future;
+  Future<void> get ready => _creatingCompleter.future;
 
   /// Returns true if the platform has native key event handling (e.g., GTK on desktop Linux).
   /// When false, Dart-side key handling should be used (e.g., eLinux).
@@ -120,7 +120,7 @@ class WebviewManager extends ValueNotifier<bool> {
         return;
       case 'javascriptChannelMessage':
         int browserId = call.arguments['browserId'] as int;
-        _webViews[browserId]?.onJavascriptChannelMessage?.call(
+        _webViews[browserId]?.onJavascriptChannelMessage.call(
             call.arguments['channel'] as String,
             call.arguments['message'] as String,
             call.arguments['callbackId'] as String,
@@ -139,7 +139,7 @@ class WebviewManager extends ValueNotifier<bool> {
       case 'onFocusedNodeChangeMessage':
         int browserId = call.arguments['browserId'] as int;
         bool editable = call.arguments['editable'] as bool;
-        _webViews[browserId]?.onFocusedNodeChangeMessage(editable);
+        _webViews[browserId]?.onFocusedNodeChangeMessage?.call(editable);
         return;
       case 'onImeCompositionRangeChangedMessage':
         int browserId = call.arguments['browserId'] as int;

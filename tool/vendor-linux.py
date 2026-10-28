@@ -15,11 +15,12 @@ from linux_patches import harden
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 NAME = 'file_viewer_flutter_linux'
 VERSION = '0.6.2'
+EXPECTED_SHA256 = '1e028859e6fe4f52a82349a0acaa6594c1bd8317738df5764fd4365d6aebf6cc'
 API = f'https://pub.dev/api/packages/webview_cef/versions/{VERSION}'
 metadata = json.load(urllib.request.urlopen(API, timeout=30))
 archive = urllib.request.urlopen(metadata['archive_url'], timeout=60).read()
 digest = hashlib.sha256(archive).hexdigest()
-if digest != metadata['archive_sha256']:
+if digest != metadata['archive_sha256'] or digest != EXPECTED_SHA256:
     raise RuntimeError('Upstream pub archive SHA-256 does not match the registry.')
 destination = ROOT / 'packages' / NAME
 destination.mkdir(parents=True, exist_ok=True)
@@ -65,7 +66,11 @@ manifest = {'upstream': 'webview_cef', 'version': VERSION,
                         'preserve web security and sandbox defaults',
                         'main-frame navigation and bridge restrictions',
                         'renderer process termination event',
-                        'retained view state cleanup']}
+                        'retained view state cleanup',
+                        'CEF 149 frame token callback matching',
+                        'minimal runtime Debug/Profile path mapping',
+                        'bundle complete CEF and Chromium notices',
+                        'install the CEF sandbox helper as an executable']}
 (destination / 'UPSTREAM.json').write_text(json.dumps(manifest, indent=2) + '\n')
 print(f'Vendored webview_cef {VERSION} Linux sources; verified SHA-256 {digest}')
 

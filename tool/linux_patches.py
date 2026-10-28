@@ -10,6 +10,45 @@ def harden(name, text):
     if name.endswith('.dart'):
         # Dart 3.13 no longer accepts final modifiers on formal parameters.
         text = re.sub(r'(?<=[(,])(\s*)final (String|Set<)', r'\1\2', text)
+        annotations = {
+            'lib/src/webview.dart': {
+                '  get onJavascriptChannelMessage': '  void Function(String, String, String, String) get onJavascriptChannelMessage',
+                '  get onToolTip': '  Function(String)? get onToolTip',
+                '  get onCursorChanged': '  Function(int)? get onCursorChanged',
+                '  get onFocusedNodeChangeMessage': '  Function(bool)? get onFocusedNodeChangeMessage',
+                '  get onImeCompositionRangeChangedMessage': '  Function(int, int, int)? get onImeCompositionRangeChangedMessage',
+                '  setWebviewListener(': '  void setWebviewListener(',
+            },
+            'lib/src/webview_manager.dart': {
+                '  get ready': '  Future<void> get ready',
+                '.onJavascriptChannelMessage?.call': '.onJavascriptChannelMessage.call',
+                '.onFocusedNodeChangeMessage(editable)': '.onFocusedNodeChangeMessage?.call(editable)',
+            },
+            'lib/src/webview_textinput.dart': {
+                '  attachTextInputClient(': '  void attachTextInputClient(',
+                '  detachTextInputClient(': '  void detachTextInputClient(',
+                '  updateIMEComposionPosition(': '  void updateIMEComposionPosition(',
+            },
+        }
+        for old, new in annotations.get(name, {}).items():
+            text = once(text, old, new)
+    if name == 'linux/CMakeLists.txt':
+        text = once(text, 'find_package(CEF REQUIRED)', '''find_package(CEF REQUIRED)
+# The locked minimal distribution ships only Release engine binaries, even
+# when the Flutter application and adapter use Debug or Profile compilation.
+set(CEF_BINARY_DIR "${CEF_ROOT}/Release")
+set(CEF_LIB_DEBUG "${CEF_LIB_RELEASE}")
+foreach(CEF_NOTICE LICENSE.txt CREDITS.html)
+  if(NOT EXISTS "${CEF_ROOT}/${CEF_NOTICE}")
+    message(FATAL_ERROR "The locked CEF distribution is missing ${CEF_NOTICE}")
+  endif()
+  install(FILES "${CEF_ROOT}/${CEF_NOTICE}" DESTINATION "licenses/cef" COMPONENT Runtime)
+endforeach()''')
+        text = once(text, 'set(cef_library_list "")', '''set(cef_library_list "")
+# CEF resolves its sandbox helper beside libcef.so. Install it as a program
+# instead of passing it through Flutter's generic install(FILES) library list.
+list(REMOVE_ITEM CEF_BINARY_FILES chrome-sandbox)
+install(PROGRAMS "${CEF_BINARY_DIR}/chrome-sandbox" DESTINATION "lib" COMPONENT Runtime)''')
     if name == 'common/webview_app.cc':
         lines = text.splitlines(keepends=True)
         text = ''.join(line for line in lines if not any(flag in line for flag in (
@@ -60,6 +99,9 @@ def harden(name, text):
         text = once(text, '    std::unordered_map<int, browser_info> browser_map_;',
             '    std::unordered_map<int, browser_info> browser_map_;\n    std::unordered_set<std::string> allowed_shell_urls_;')
     elif name == 'common/webview_handler.cc':
+        text = once(text, '        int64_t frameIdInt = atoll(frameId.c_str());\n\n', '')
+        text = once(text, 'std::stoll(frame->GetIdentifier().ToString()) == frameIdInt',
+            'frame && frame->GetIdentifier().ToString() == frameId')
         text = once(text, '\tstd::string message_name = message->GetName();',
             '    if (!frame || !frame->IsMain()) return false;\n\tstd::string message_name = message->GetName();')
         text = once(text, '    loadUrl(browser->GetIdentifier(), target_url);\n', '')
@@ -68,6 +110,23 @@ def harden(name, text):
     elif name == 'lib/src/webview.dart':
         start = text.index('class WebViewState')
         controller, state = text[:start], text[start:]
+        controller = once(controller, '''    await _creatingCompleter.future;
+    if (!_isDisposed) {
+      _isDisposed = true;
+      WebviewManager().removeWebView(_browserId);
+      await _pluginChannel.invokeMethod('close', _browserId);
+    }
+    super.dispose();''', '''    if (_isDisposed) return;
+    _isDisposed = true;
+    try {
+      await _creatingCompleter.future;
+      WebviewManager().removeWebView(_browserId);
+      await _pluginChannel.invokeMethod('close', _browserId);
+    } finally {
+      super.dispose();
+    }''')
+        state = once(state, '      await _controller.ready;\n      unawaited(',
+            '      await _controller.ready;\n      if (!mounted) return;\n      unawaited(')
         state = once(state, '    _controller._onFocusedNodeChangeMessage = (editable) {',
             '    _controller._onFocusedNodeChangeMessage = (editable) {\n      if (!mounted) return;')
         state = once(state, '    _controller._onImeCompositionRangeChangedMessage = (x, y, height) {',

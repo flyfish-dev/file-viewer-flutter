@@ -11,6 +11,10 @@
     "preserve web security and sandbox defaults",
     "main-frame navigation and bridge restrictions",
     "renderer process termination event",
-    "retained view state cleanup"
+    "retained view state cleanup",
+    "CEF 149 frame token callback matching",
+    "minimal runtime Debug/Profile path mapping",
+    "bundle complete CEF and Chromium notices",
+    "install the CEF sandbox helper as an executable"
   ]
 }

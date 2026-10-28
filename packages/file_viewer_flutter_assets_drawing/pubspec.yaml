@@ -131,3 +131,5 @@ flutter:
     - assets/vendor/drawio/stencils/veeam/
     - assets/vendor/drawio/styles/
     - assets/vendor/drawio/styles/fonts/
+false_secrets:
+  - /assets/vendor/drawio/viewer-static.min.js

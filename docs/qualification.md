@@ -4,7 +4,7 @@ This is a development preview. A platform metadata entry is not a support guaran
 
 | Target | Initial evidence | Still required for qualification |
 | --- | --- | --- |
-| Web | JS release build; Chrome 156 renders all five fixtures with external HTTP blocked; Worker/WASM executes | WASM application build, retained-session lifecycle and representative mobile browsers |
+| Web | JS and Dart WASM release builds; Chrome 156 renders all five fixtures with external HTTP blocked; Worker/WASM executes | Retained-session lifecycle and representative mobile browsers |
 | iOS | iPhone 17 Pro simulator / iOS 26.4: five fixtures, Worker/WASM, five reattachments without parsing again, idle PDF preload, close/reload | Physical iPhone/iPad, memory pressure, background recovery and representative format corpus |
 | Android | Xiaomi 12 Pro / API 35 / WebView 131: five fixtures, Worker/WASM, five reattachments without parsing again, idle PDF preload, close/reload | Older/current WebView matrix, memory pressure, background recovery and representative format corpus |
 | macOS | Apple Silicon / macOS 26 / Xcode 27: native build, five fixtures, Worker/WASM, five reattachments, idle PDF preload and close/reload | Intel matrix, memory pressure, background recovery and representative format corpus |

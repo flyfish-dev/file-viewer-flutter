@@ -25,6 +25,16 @@ prepare_prebuilt_files("${FILE_VIEWER_CEF_ROOT}")
 set(CEF_ROOT "${FILE_VIEWER_CEF_ROOT}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
 find_package(CEF REQUIRED)
+# The locked minimal distribution ships only Release engine binaries, even
+# when the Flutter application and adapter use Debug or Profile compilation.
+set(CEF_BINARY_DIR "${CEF_ROOT}/Release")
+set(CEF_LIB_DEBUG "${CEF_LIB_RELEASE}")
+foreach(CEF_NOTICE LICENSE.txt CREDITS.html)
+  if(NOT EXISTS "${CEF_ROOT}/${CEF_NOTICE}")
+    message(FATAL_ERROR "The locked CEF distribution is missing ${CEF_NOTICE}")
+  endif()
+  install(FILES "${CEF_ROOT}/${CEF_NOTICE}" DESTINATION "licenses/cef" COMPONENT Runtime)
+endforeach()
 
 # This value is used when generating builds using this plugin, so it must
 # not be changed.
@@ -114,6 +124,10 @@ set(INSTALL_BUNDLE_APPLICATION_DIR_WEBVIEW_CEV "${INSTALL_BUNDLE_APPLICATION_DIR
 
 #set CEF binary and resource files which need to copy to the target output directory
 set(cef_library_list "")
+# CEF resolves its sandbox helper beside libcef.so. Install it as a program
+# instead of passing it through Flutter's generic install(FILES) library list.
+list(REMOVE_ITEM CEF_BINARY_FILES chrome-sandbox)
+install(PROGRAMS "${CEF_BINARY_DIR}/chrome-sandbox" DESTINATION "lib" COMPONENT Runtime)
 foreach(FILE ${CEF_BINARY_FILES})
   list(APPEND cef_library_list ${CEF_BINARY_DIR}/${FILE})
 endforeach()

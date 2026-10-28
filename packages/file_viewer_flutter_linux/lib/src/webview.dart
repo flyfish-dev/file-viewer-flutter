@@ -57,7 +57,7 @@ class WebViewController extends ValueNotifier<bool> {
   WebviewEventsListener? _listener;
   WebviewEventsListener? get listener => _listener;
 
-  get onJavascriptChannelMessage => (String channelName,
+  void Function(String, String, String, String) get onJavascriptChannelMessage => (String channelName,
           String message, String callbackId, String frameId) {
         if (_javascriptChannels.containsKey(channelName)) {
           _javascriptChannels[channelName]!.onMessageReceived(
@@ -67,10 +67,10 @@ class WebViewController extends ValueNotifier<bool> {
         }
       };
 
-  get onToolTip => _onToolTip;
-  get onCursorChanged => _onCursorChanged;
-  get onFocusedNodeChangeMessage => _onFocusedNodeChangeMessage;
-  get onImeCompositionRangeChangedMessage =>
+  Function(String)? get onToolTip => _onToolTip;
+  Function(int)? get onCursorChanged => _onCursorChanged;
+  Function(bool)? get onFocusedNodeChangeMessage => _onFocusedNodeChangeMessage;
+  Function(int, int, int)? get onImeCompositionRangeChangedMessage =>
       _onImeCompositionRangeChangedMessage;
 
   /// Initializes the underlying platform view.
@@ -95,19 +95,21 @@ class WebViewController extends ValueNotifier<bool> {
     return _creatingCompleter.future;
   }
 
-  setWebviewListener(WebviewEventsListener listener) {
+  void setWebviewListener(WebviewEventsListener listener) {
     _listener = listener;
   }
 
   @override
   Future<void> dispose() async {
-    await _creatingCompleter.future;
-    if (!_isDisposed) {
-      _isDisposed = true;
+    if (_isDisposed) return;
+    _isDisposed = true;
+    try {
+      await _creatingCompleter.future;
       WebviewManager().removeWebView(_browserId);
       await _pluginChannel.invokeMethod('close', _browserId);
+    } finally {
+      super.dispose();
     }
-    super.dispose();
   }
 
   /// Loads the given [url].
@@ -634,6 +636,7 @@ class WebViewState extends State<WebView> with WebeViewTextInput {
     final box = _key.currentContext?.findRenderObject() as RenderBox?;
     if (box != null) {
       await _controller.ready;
+      if (!mounted) return;
       unawaited(
           _controller._setSize(dpi, Size(box.size.width, box.size.height)));
     }

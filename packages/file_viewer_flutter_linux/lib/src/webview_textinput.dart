@@ -12,7 +12,7 @@ mixin WebeViewTextInput implements DeltaTextInputClient {
 
   TextInputConnection? _textInputConnection;
 
-  attachTextInputClient() {
+  void attachTextInputClient() {
     // On Windows the OS IME is driven by the native WM_IME pipeline (the Flutter
     // text-input/delta path does not deliver composition for an OSR browser on
     // Windows). Don't claim the IME here so the native path can own it.
@@ -27,11 +27,11 @@ mixin WebeViewTextInput implements DeltaTextInputClient {
     _textInputConnection?.show();
   }
 
-  detachTextInputClient() {
+  void detachTextInputClient() {
     _textInputConnection?.close();
   }
 
-  updateIMEComposionPosition(double x, double y, double height, Offset offset) {
+  void updateIMEComposionPosition(double x, double y, double height, Offset offset) {
     // x/y are the caret position inside the webview (logical px), with y at the
     // caret's bottom (the native side reports the element/character bottom);
     // height is the line height. offset is the webview widget's global origin.
