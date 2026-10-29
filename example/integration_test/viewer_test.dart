@@ -7,7 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 void main() {
-  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized()
+    // Native WebViews and their viewport changes need the same live-frame
+    // scheduling as an ordinary app, including frames between explicit pumps.
+    ..framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
   testWidgets(
     'offline previews, adaptive viewports, Worker/WASM, and retained sessions',
@@ -218,7 +221,9 @@ void main() {
         if (filename == 'sample.pptx') {
           final loads = events.where((event) => event == 'load-start').length;
           Future<void> assertPresentationFit(String label) async {
+            step('$label: fit requested');
             final fit = await command(controller.fit) as Map;
+            step('$label: fit returned');
             expect(
               fit['applied'],
               true,
@@ -300,6 +305,7 @@ void main() {
               ),
             );
             await recordViewport(label);
+            step('$label: rendered bounds verified');
           }
 
           await assertPresentationFit('PPTX fills the bounded viewport');
@@ -399,13 +405,12 @@ void main() {
             controller.load(const FileViewerSource.asset('assets/sample.txt')),
       );
       expect(runtime.activeSessionCount, 1);
-      binding.reportData = {
+      final evidence = {
         'workerProbe': probe,
         'timings': timings,
         'events': events,
         'viewportMeasurements': viewportMeasurements,
       };
-      debugPrint('FILE_VIEWER_EVIDENCE ${jsonEncode(binding.reportData)}');
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
       await runtime.shutdown();
@@ -413,6 +418,8 @@ void main() {
       source.dispose();
       visible.dispose();
       viewport.dispose();
+      binding.reportData = {...evidence, 'completed': true};
+      debugPrint('FILE_VIEWER_EVIDENCE ${jsonEncode(binding.reportData)}');
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );
