@@ -14,7 +14,9 @@ export function createProtocolSession({ container, mount, makeOptions, send, war
   let destroyed = false;
   const emit = message => send({ protocolVersion, ...message });
   const options = input => makeOptions({
-    fit: 'width',
+    // Let each shared renderer choose its own reading layout. In particular,
+    // spreadsheet auto-fit shrinks wide sheets without enlarging small ones.
+    fit: 'auto',
     ...input,
     toolbar: input?.toolbar === false ? false : {
       ...(input?.toolbar || {}), print: false, download: false, exportHtml: false,

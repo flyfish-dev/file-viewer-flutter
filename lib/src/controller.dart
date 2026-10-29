@@ -62,7 +62,9 @@ class FileViewerController extends ChangeNotifier {
   Future<Object?> zoomIn() => _bound.command('zoomIn');
   Future<Object?> zoomOut() => _bound.command('zoomOut');
   Future<Object?> resetZoom() => _bound.command('resetZoom');
-  Future<Object?> fit({String mode = 'width'}) =>
+
+  /// Restore format-aware fitting, or explicitly choose width, contain or actual.
+  Future<Object?> fit({String mode = 'auto'}) =>
       _bound.command('fitToView', {'fit': mode});
   Future<Object?> getViewState() => _bound.command('getViewState');
   Future<Object?> applyViewState(Map<String, Object?> state) =>

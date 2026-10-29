@@ -17,6 +17,7 @@ class FileViewer extends StatefulWidget {
     this.runtime,
     this.theme = 'system',
     this.locale = 'auto',
+    this.fit = 'auto',
     this.retainSession = true,
     this.onEvent,
     this.onError,
@@ -28,6 +29,10 @@ class FileViewer extends StatefulWidget {
   final FileViewerRuntime? runtime;
   final String theme;
   final String locale;
+
+  /// Initial layout policy. Auto uses the shared renderer's format-specific
+  /// fit, follows viewport changes until interaction, and preserves manual zoom.
+  final String fit;
   final bool retainSession;
   final FileViewerEventCallback? onEvent;
   final void Function(Object error)? onError;
@@ -49,6 +54,7 @@ class _FileViewerState extends State<FileViewer> {
   Map<String, Object?> get _options => {
     'locale': widget.locale,
     'theme': widget.theme,
+    'fit': widget.fit,
     'ui': {'density': 'compact'},
   };
 
@@ -172,7 +178,8 @@ class _FileViewerState extends State<FileViewer> {
     } else if (session != null &&
         (oldWidget.source != widget.source ||
             oldWidget.theme != widget.theme ||
-            oldWidget.locale != widget.locale)) {
+            oldWidget.locale != widget.locale ||
+            oldWidget.fit != widget.fit)) {
       setState(() {
         _error = null;
       });

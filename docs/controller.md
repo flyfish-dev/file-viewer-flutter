@@ -71,12 +71,15 @@ class _ControlledPreviewState extends State<ControlledPreview> {
 | Search and clear search | `search(query)`, `clearSearch()` |
 | Next / previous result | `nextSearchResult()`, `previousSearchResult()` |
 | Zoom in, out and reset | `zoomIn()`, `zoomOut()`, `resetZoom()` |
+| Restore format-aware automatic fit | `fit()` or `fit(mode: 'auto')` |
 | Fit width / page | `fit(mode: 'width')`, `fit(mode: 'contain')` |
 | Read / restore view state | `getViewState()`, `applyViewState(state)` |
 | Query available operations | `getCapabilities()` |
 | Clear current document | `close()` |
 
 Operations depend on the format. Query `getCapabilities()` before exposing application actions; a shared method does not give every format identical capabilities. Print, download and browser-export UI remains gated while native host output integration is qualified in this preview.
+
+The repository defaults to `FileViewer(fit: 'auto', ...)`. Automatic fitting follows viewport changes until the user interacts with the view. Spreadsheets shrink when needed and do not enlarge a small sheet above its natural size. Explicit width fitting may enlarge content; call `fit()` to return to the format-aware policy. Retained sessions preserve manual zoom and scrolling.
 
 ## Errors and recovery
 

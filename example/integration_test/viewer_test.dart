@@ -10,7 +10,7 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'offline previews, real Worker/WASM, and retained route sessions',
+    'offline previews, adaptive viewports, Worker/WASM, and retained sessions',
     (tester) async {
       final runtime = FileViewerRuntime();
       final controller = FileViewerController();
@@ -18,6 +18,9 @@ void main() {
         const FileViewerSource.asset('assets/sample.txt'),
       );
       final visible = ValueNotifier<bool>(true);
+      final viewport = ValueNotifier<Size>(const Size(720, 440));
+      final viewportMeasurements = <Map<String, Object?>>[];
+      const viewportKey = ValueKey('native-viewport');
       final events = <String>[];
       final errors = <Object>[];
       final timings = <Map<String, Object?>>[];
@@ -33,19 +36,28 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: ListenableBuilder(
-                listenable: Listenable.merge([source, visible]),
-                builder: (_, _) => !visible.value
-                    ? const SizedBox.shrink()
-                    : FileViewer(
-                        source: source.value,
-                        runtime: runtime,
-                        controller: controller,
-                        onEvent: (event) {
-                          events.add(event.type);
-                          if (event.type == 'documentReady') documentReady++;
-                        },
-                        onError: errors.add,
-                      ),
+                listenable: Listenable.merge([source, visible, viewport]),
+                builder: (_, _) => Align(
+                  alignment: Alignment.topLeft,
+                  child: !visible.value
+                      ? const SizedBox.shrink()
+                      : SizedBox.fromSize(
+                          size: viewport.value,
+                          child: FileViewer(
+                            key: viewportKey,
+                            source: source.value,
+                            runtime: runtime,
+                            controller: controller,
+                            onEvent: (event) {
+                              events.add(event.type);
+                              if (event.type == 'documentReady') {
+                                documentReady++;
+                              }
+                            },
+                            onError: errors.add,
+                          ),
+                        ),
+                ),
               ),
             ),
           ),
@@ -84,6 +96,35 @@ void main() {
       }
 
       await waitFor(() => controller.isAttached && documentReady == 1);
+      Future<double> readScale() async {
+        final state = await command(controller.getViewState) as Map;
+        return ((state['scale'] ?? (state['zoom'] as Map?)?['scale']) as num)
+            .toDouble();
+      }
+
+      Future<void> waitForScale(bool Function(double) accepts) async {
+        final deadline = DateTime.now().add(const Duration(seconds: 10));
+        while (true) {
+          await tester.pump(const Duration(milliseconds: 100));
+          final scale = await readScale();
+          if (accepts(scale)) return;
+          if (DateTime.now().isAfter(deadline)) {
+            fail('Unexpected sheet scale: $scale');
+          }
+        }
+      }
+
+      Future<void> recordViewport(String label) async {
+        final actual = tester.getSize(find.byKey(viewportKey));
+        viewportMeasurements.add({
+          'step': label,
+          'width': actual.width,
+          'height': actual.height,
+          'scale': await readScale(),
+        });
+        expect(tester.takeException(), isNull);
+      }
+
       step('initial document');
       final probe = await command(controller.probeRuntime);
       expect(probe['workerExecuted'], true);
@@ -108,6 +149,30 @@ void main() {
           isNotEmpty,
         );
         step(filename);
+        if (filename == 'sample.xlsx') {
+          final loads = events.where((event) => event == 'load-start').length;
+          await waitForScale((scale) => (scale - 1).abs() < 0.01);
+          await recordViewport('small sheet stays at natural size');
+          viewport.value = const Size(280, 300);
+          await waitForScale((scale) => scale > 0 && scale < 1);
+          await recordViewport('narrow viewport shrinks the sheet');
+          expect(tester.getSize(find.byKey(viewportKey)), const Size(280, 300));
+          viewport.value = const Size(720, 440);
+          await waitForScale((scale) => (scale - 1).abs() < 0.01);
+          await recordViewport('wide viewport stops at natural size');
+          await command(controller.zoomIn);
+          final manualScale = await readScale();
+          expect(manualScale, greaterThan(1));
+          viewport.value = const Size(360, 260);
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(await readScale(), closeTo(manualScale, 0.001));
+          await recordViewport('manual zoom survives resize');
+          await command(controller.fit);
+          expect(await readScale(), lessThanOrEqualTo(1));
+          await recordViewport('auto fit restores adaptive layout');
+          expect(events.where((event) => event == 'load-start').length, loads);
+          viewport.value = const Size(720, 440);
+        }
       }
       final loadsBeforeReopen = events
           .where((event) => event == 'load-start')
@@ -163,6 +228,7 @@ void main() {
         'workerProbe': probe,
         'timings': timings,
         'events': events,
+        'viewportMeasurements': viewportMeasurements,
       };
       debugPrint('FILE_VIEWER_EVIDENCE ${jsonEncode(binding.reportData)}');
       await tester.pumpWidget(const SizedBox.shrink());
@@ -171,6 +237,7 @@ void main() {
       controller.dispose();
       source.dispose();
       visible.dispose();
+      viewport.dispose();
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );

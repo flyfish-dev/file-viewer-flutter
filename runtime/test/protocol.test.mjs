@@ -39,6 +39,14 @@ test('toolbar false is preserved and browser-only output actions stay disabled',
   assert.equal(f.loads[1].options.theme, 'dark');
   assert.equal(f.loads[1].options.toolbar.exportHtml, false);
 });
+test('format-aware fit is used for warm-up and loads without overriding explicit fit', async () => {
+  const f = fixture();
+  assert.equal(f.mountedOptions[0].options.fit, 'auto');
+  await f.request('load', { filename: 'sheet.xlsx' });
+  assert.equal(f.loads[0].options.fit, 'auto');
+  await f.request('load', { options: { fit: { mode: 'contain', maxScale: 1 } } }, 2);
+  assert.deepEqual(f.loads[1].options.fit, { mode: 'contain', maxScale: 1 });
+});
 test('module warm-up never claims that document engines are already initialized', async () => {
   const f = fixture(); await f.request('warmUp');
   assert.deepEqual(f.messages.at(-1).result, { moduleReady: ['pdf'], engineReady: [] });

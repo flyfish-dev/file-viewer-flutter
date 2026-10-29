@@ -1,33 +1,134 @@
-# File Viewer Flutter
+<p align="center">
+  <a href="https://github.com/flyfish-dev/file-viewer">
+    <img src="https://raw.githubusercontent.com/flyfish-dev/file-viewer-flutter/main/docs/assets/file-viewer.png" width="80" height="80" alt="File Viewer logo">
+  </a>
+</p>
 
-An offline Flutter document viewer, backed by the public [File Viewer](https://github.com/flyfish-dev/file-viewer) rendering core. This repository contains the Flutter API, lifecycle management, packaged web resources, native adapters and a runnable example.
+<h1 align="center">File Viewer for Flutter</h1>
 
-**Development preview: `0.1.0-dev.1`.** Android, iOS, Web, Windows, macOS and Linux are the delivery targets. A target is supported only after its native build, document rendering and lifecycle tests pass. See [the qualification matrix](docs/qualification.md); platform declarations alone are not test evidence.
+<p align="center">Offline document preview. One Flutter widget.</p>
 
-The [delivery and stable-release plan (简体中文)](docs/delivery-plan.zh-CN.md) covers integration, prewarming, platform ownership, performance acceptance and pub.dev distribution.
+<p align="center">
+  <a href="https://pub.dev/packages/file_viewer_flutter"><img src="https://img.shields.io/pub/v/file_viewer_flutter?include_prereleases&label=pub.dev&color=0891b2" alt="pub.dev package"></a>
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-%E2%89%A5%203.47-02569B?logo=flutter" alt="Flutter 3.47 or later"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-64748b" alt="Apache 2.0 license"></a>
+</p>
 
-**Developer site:** [flutter.file-viewer.app](https://flutter.file-viewer.app) · [Quick start](docs/quickstart.md) · [中文快速开始](docs/quickstart.zh-CN.md) · [Platform setup](docs/platforms.md) · [Controllers and events](docs/controller.md).
+<p align="center">
+  <a href="https://flutter.file-viewer.app/en/">Website</a> ·
+  <a href="https://flutter.file-viewer.app/en/docs/quickstart/">Documentation</a> ·
+  <a href="https://pub.dev/packages/file_viewer_flutter">pub.dev</a> ·
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-## Integrate
+<h3 align="center"><a href="https://github.com/flyfish-dev/file-viewer">File Viewer · Main repository ↗</a></h3>
 
-Add the development-preview package from pub.dev:
+File Viewer for Flutter brings the [File Viewer](https://github.com/flyfish-dev/file-viewer) rendering core to Flutter applications. This repository maintains the Flutter widget, controllers, application lifecycle, native WebView adapters and packaged offline resources. The main repository maintains the shared rendering engines and browser integrations.
+
+> **Development preview — `0.1.0-dev.1`.** The delivery targets are Android, iOS, Web, Windows, macOS and Linux. Build and fixture evidence is recorded in the [qualification matrix](docs/qualification.md); production adoption requires validation against your devices and document corpus.
+
+## Why File Viewer for Flutter
+
+- **A consistent Flutter API** for asset files, local paths, in-memory bytes and authenticated HTTP(S) sources.
+- **Local rendering and bundled resources**, without a public CDN, remote preview service or runtime engine download.
+- **Application-scoped prewarming** and reusable sessions to reduce repeated initialization when opening previews.
+- **Format-aware layout**, with automatic fitting, zoom, search, view-state restoration and controller capability queries.
+- **Native platform integration**, using system WebViews on Android, iOS and macOS, bundled WebView2 on Windows and bundled CEF on Linux.
+
+## Quick start
+
+Requires Flutter **3.47+** and Dart **3.13+**. The pinned development toolchain is Flutter `3.47.4` / Dart `3.13.3`.
+
+### 1. Add the package
 
 ```yaml
 dependencies:
   file_viewer_flutter: 0.1.0-dev.1
 ```
 
-The package family is maintained under the [flyfish.dev publisher](https://pub.dev/publishers/flyfish.dev). A complete local SDK bundle is also available. A repository checkout uses the included dependency overrides for development.
+From your application directory, install dependencies and configure the native host:
 
-For a delivered SDK archive, extract it next to your application and add this dependency; the archive rewrites all internal resource dependencies to local paths:
-
-```yaml
-dependencies:
-  file_viewer_flutter:
-    path: ../file_viewer_flutter-0.1.0-dev.1
+```sh
+flutter pub get
+dart run file_viewer_flutter:setup --project . --check
+dart run file_viewer_flutter:setup --project . --apply
 ```
 
-For repository development:
+`--check` previews the required changes; `--apply` writes them while preserving existing application settings. Flutter Web does not require native host configuration. Rebuild the application after applying native changes.
+
+### 2. Add a document
+
+Place a PDF at `assets/example.pdf` and declare it in the application's `pubspec.yaml`:
+
+```yaml
+flutter:
+  assets:
+    - assets/example.pdf
+```
+
+### 3. Display it
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:file_viewer_flutter/file_viewer_flutter.dart';
+
+void main() {
+  runApp(const FileViewerHost(
+    child: MaterialApp(
+      home: Scaffold(
+        body: FileViewer(
+          source: FileViewerSource.asset('assets/example.pdf'),
+        ),
+      ),
+    ),
+  ));
+}
+```
+
+`FileViewerHost` begins prewarming after the first Flutter frame. `Scaffold.body` provides a bounded viewport; use `Expanded` or explicit dimensions when embedding the viewer in another layout.
+
+Continue with the [full integration guide](https://flutter.file-viewer.app/en/docs/quickstart/).
+
+## Developer guides
+
+| Guide | Covers |
+| --- | --- |
+| [Platform setup](https://flutter.file-viewer.app/en/docs/platforms/) | Android, iOS, Web, Windows, macOS and Linux configuration |
+| [File sources](https://flutter.file-viewer.app/en/docs/file-sources/) | Assets, native paths, bytes, remote URLs and authorization |
+| [Prewarming and lifecycle](https://flutter.file-viewer.app/en/docs/runtime/) | Session reuse, preloading, backgrounding and memory pressure |
+| [Controllers and events](https://flutter.file-viewer.app/en/docs/controller/) | Readiness, search, fit, zoom, view state and errors |
+| [Offline deployment](https://flutter.file-viewer.app/en/docs/deployment/) | Resource packages, desktop engines and local SDK delivery |
+
+The same guides are available in [简体中文](https://flutter.file-viewer.app/zh/docs/quickstart/).
+
+## Lifecycle and layout
+
+Use one `FileViewerHost` at the application root. It keeps one spare viewer; a retained session can reuse its native engine and document after leaving and reopening a preview. Simultaneous previews use separate native views. Memory pressure releases idle instances.
+
+The default automatic fit delegates layout to each shared renderer: documents fit their reading viewport, presentations fit their canvas, and spreadsheets shrink to fit without automatically enlarging a small sheet. Manual zoom is preserved during later viewport changes. Use a `FileViewerController` for explicit automatic, width, page or actual-size fitting and other available operations.
+
+Prewarming initializes the shell and common parser modules. To prepare a specific upcoming document, call `FileViewerRuntime.instance.preload(source)`. Shell readiness, parser warm-up and actual visible content are separate states.
+
+Backgrounding pauses audio/video. The WebView and operating system may suspend or reclaim the process; this SDK does not install a permanent background service. Foregrounding requests layout refresh, and renderer termination triggers a recovery attempt. Media does not resume automatically. Clear sessions on logout with `clearSessions()`.
+
+## Platform and distribution notes
+
+| Target | Rendering surface | Distribution |
+| --- | --- | --- |
+| Android | System WebView | Bundled viewer resources |
+| iOS | WKWebView | Bundled viewer resources |
+| Web | Browser | Self-hosted application and viewer resources |
+| macOS | Retained WKWebView | Bundled viewer resources |
+| Windows | WebView2 | Checksum-locked Fixed Version runtime |
+| Linux | CEF | Checksum-locked runtime with sandbox enabled |
+
+All rendering resources come from the immutable public File Viewer `3.3.0` distribution. Four version-locked asset packages—base, CAD, drawing and Typst—are installed together, totaling approximately **225 MiB before application compression**. Bundled Windows and Linux engines add to the installed size. Customer applications need Flutter tooling; Node.js is only required for maintainer builds.
+
+Build machines need the locked desktop archives or a populated archive cache. Set `FILE_VIEWER_OFFLINE_BUILD=1` to fail a desktop build when its cache is missing. Runtime use does not download native engines. Remote documents, embedded external resources, codecs and system WebView versions can still affect individual files.
+
+Print, download and browser-export controls remain hidden in this preview while native output integration is being qualified. See the [qualification matrix](docs/qualification.md) for measured scope and remaining release requirements.
+
+## Run the example
 
 ```sh
 git clone https://github.com/flyfish-dev/file-viewer-flutter.git
@@ -39,63 +140,29 @@ dart run file_viewer_flutter:setup --project . --apply
 flutter run
 ```
 
-Configure the application once with the setup command. `--check` prints proposed changes without writing. The command preserves existing application settings and adds only the local networking and platform initialization needed by the selected platforms.
+The example includes offline PDF, Word, Excel, PowerPoint and text fixtures. Its responsive workspace provides a document sidebar in wide windows and a document selector in compact layouts.
 
-At the application root, one line starts application-scoped prewarming after the first Flutter frame:
+For a local SDK delivery, follow [offline deployment](https://flutter.file-viewer.app/en/docs/deployment/). Repository dependency overrides are for development; delivered SDK bundles rewrite internal dependencies to local paths.
 
-```dart
-runApp(FileViewerHost(child: MyApp()));
-```
-
-In a bounded layout, one line displays a document:
-
-```dart
-FileViewer(source: FileViewerSource.asset('assets/example.pdf'))
-```
-
-Import `package:file_viewer_flutter/file_viewer_flutter.dart`. Declare your own asset documents in your application's `pubspec.yaml`. Native file paths, in-memory bytes and HTTP(S) URLs are also available through `FileViewerSource.file`, `.bytes` and `.url`. Web cannot open arbitrary native paths; use bytes from the browser file picker.
-
-## Warm up and reuse
-
-The host keeps one spare viewer. Leaving a preview route retains its engine and document; opening the same source reuses that session. Simultaneous previews receive separate native views. Memory pressure releases idle viewers. Backgrounding pauses audio/video playback; WebView and the operating system govern other background work and may suspend or reclaim the process. Foregrounding requests a layout refresh, and renderer termination triggers a recovery attempt. Media does not resume automatically.
-
-`warmUp()` initializes the shell and common parser modules. It does not claim that every Worker, WASM engine, font or document is already parsed. To parse a known upcoming document before navigation:
-
-```dart
-await FileViewerRuntime.instance.preload(source);
-```
-
-Use a controller for search, zoom, fit, view state, capabilities, reload and close. Call `clearSessions()` on logout to remove active documents and idle previews. Call `shutdown()` when disposing an explicitly owned runtime. Remote authorization headers remain in Dart and are sent by the local resource proxy; they are not included in JavaScript messages.
-
-## Offline distribution
-
-All rendering resources come from the pinned public File Viewer `3.3.0` distribution. The four asset packages are version locked and installed together: base, CAD, drawing and Typst. The current resources total approximately 225 MiB before application compression. Customer applications need Flutter tooling; Node.js is a maintainer build dependency only.
-
-Android, iOS and macOS use the installed system WebView. Windows bundles a checksum-locked WebView2 Fixed Version runtime. Linux bundles a checksum-locked CEF runtime with its sandbox enabled. These desktop engines increase the installed application size. Build machines need the locked archives or a prepopulated cache; runtime use does not download engines. Set `FILE_VIEWER_OFFLINE_BUILD=1` to fail a desktop build when its archive cache is missing.
-
-Rendering is local. A remote source, an embedded remote image/link, browser policy, installed system WebView version or an unsupported document codec can still affect a particular file. Validate your required file corpus and devices before production adoption. Print/download/browser-export controls are hidden in this preview while host-native output integration is being qualified.
-
-## Development
-
-The pinned toolchain is Flutter `3.47.4` and Dart `3.13.3` (`.fvmrc`).
-
-The native adapters are pinned to the compatible InAppWebView `1.2.0-beta.3` family (Windows `0.7.0-beta.3`), including the Android AGP 9 fix. macOS uses a checksum-verified derivative with a fresh native container for each Flutter attachment while retaining the WKWebView. Its plugin and channels have a separate namespace. The SDK uses the federated platform APIs directly and does not install an unused second Linux engine. These prerelease dependencies are another reason to keep the SDK at development-preview status.
+## Contributing
 
 ```sh
-flutter pub get
 flutter analyze
 flutter test
 cd runtime
 npm ci
-node --test test/*.test.mjs
+npm test
 cd ..
 node tool/build-runtime.mjs
 python3 tool/check-pub.py
-python3 tool/bundle-sdk.py
 ```
 
-Run `example/integration_test/viewer_test.dart` on actual platform WebViews. `tool/verify-web.mjs` tests a built Flutter Web application in Chrome with external HTTP requests blocked. Generated evidence and screenshots stay under `.release/` and are excluded from source control. [Architecture and release gates](docs/architecture.md) describe resource routing, lifecycle, security boundaries and remaining qualification work.
+Run affected integration tests against actual platform WebViews. Keep generated evidence in `.release/`; never commit customer documents, credentials or signing material. See [architecture and release gates](docs/architecture.md) and the [delivery plan](docs/delivery-plan.zh-CN.md) for ownership and validation requirements.
 
-## Licenses
+Rendering fixes belong in the shared [File Viewer main repository](https://github.com/flyfish-dev/file-viewer). Flutter API and native integration issues belong in [this repository](https://github.com/flyfish-dev/file-viewer-flutter/issues).
 
-The adapter uses Apache-2.0. Keep the upstream resource license ledgers, notices and source offers included in every asset package. The macOS adapter retains its original InAppWebView license and archive provenance; Linux retains the original `webview_cef` and CEF notices. The legacy PPT renderer's watermark is preserved. Native engine distributions carry their own license terms; include the complete bundled runtime directories when distributing an application.
+## License and attribution
+
+The Flutter adapter is licensed under [Apache-2.0](LICENSE). Asset and native engine distributions retain their own licenses, notices and source offers; preserve those files when redistributing an application. The macOS adapter retains its InAppWebView provenance, and the Linux adapter retains its `webview_cef` and CEF notices. The legacy PPT renderer's built-in watermark is preserved.
+
+The logo is the File Viewer project brand, reused from the [main repository](https://github.com/flyfish-dev/file-viewer).
