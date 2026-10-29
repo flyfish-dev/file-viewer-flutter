@@ -145,6 +145,7 @@ jobs:
         working-directory: example
       - name: Real macOS WKWebView integration
         if: matrix.platform == 'macos'
+        timeout-minutes: 8
         run: flutter drive --driver test_driver/integration_test.dart --target integration_test/viewer_test.dart --use-application-binary "build/macos/Build/Products/Debug/File Viewer.app" --debug -d macos --no-pub
         working-directory: example
       - name: Real Windows integration
