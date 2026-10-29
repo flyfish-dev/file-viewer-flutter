@@ -151,6 +151,14 @@ jobs:
         if: matrix.platform == 'windows'
         run: flutter test integration_test/viewer_test.dart -d ${{ matrix.platform }} --no-pub --dart-define=FILE_VIEWER_DIAGNOSTICS=true
         working-directory: example
+      - name: Retain native integration receipt
+        if: ${{ always() && matrix.platform != 'windows' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-${{ matrix.platform }}-${{ matrix.arch }}
+          path: example/build/integration_response_data.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Verify Windows runtime signature
         if: matrix.platform == 'windows'
         shell: pwsh
