@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/flyfish-dev/file-viewer">
-    <img src="https://raw.githubusercontent.com/flyfish-dev/file-viewer/main/apps/official-site/public/logo.png" width="92" height="92" alt="File Viewer 品牌标识">
+    <img src="docs/assets/file-viewer.png" width="92" alt="File Viewer 品牌标识">
   </a>
 </p>
 
