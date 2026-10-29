@@ -79,14 +79,12 @@ try {
         events: await page.evaluate(() => __viewerEvidence.events), tree: await page.locator('body').ariaSnapshot() }, null, 2));
       throw error;
     }
-    // Flutter's route transition and the renderer's first paint happen after
-    // load-complete. Capture settled content rather than an entering surface.
+    // The renderer's first paint happens after load-complete. The responsive
+    // workspace keeps one preview surface while the document selector changes.
     await page.waitForTimeout(500);
     await page.evaluate(async () => { await document.fonts.ready; await new Promise(requestAnimationFrame); });
     await page.screenshot({ path: resolve(output, `${name.toLowerCase()}.png`) });
     documents.push({ name, elapsedMs: Date.now() - started });
-    await page.getByRole('button', { name: 'Back', exact: true }).click();
-    await page.getByRole('button', { name, exact: true }).waitFor();
   }
   const workerProbe = await page.evaluate(async () => {
     const evidence = __viewerEvidence;
