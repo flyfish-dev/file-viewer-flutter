@@ -41,7 +41,8 @@ engine without copying or changing its parsing or drawing code. It establishes
 a full-height host, registers shared core fit/zoom/view-state providers, and
 keeps slideshow and pagination controls within the bounded Flutter surface.
 Automatic fitting and user zoom use a single absolute scale; small surfaces
-combine the engine's zoom floor with CSS layout zoom. The native
+combine the engine's zoom floor with a clipped transform frame, preserving
+correct scroll extents on older WebKit releases. The native
 adapter reports actual slide bounds for layout consumers and qualification.
 
 The adapter consumes immutable public npm release archives only. Rebuilding assets does not copy files from the private File Viewer source repository. Four generated Flutter asset packages keep each pub archive below its size budget. Their package versions, upstream version and protocol must match.

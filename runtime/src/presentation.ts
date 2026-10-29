@@ -41,6 +41,7 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
 .fv-presentation button:disabled{opacity:.35;cursor:default}
 .fv-presentation-scroll{position:relative;flex:1 1 0;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:16px;box-sizing:border-box}
 .fv-presentation-surface{position:relative;min-height:100%;width:100%;box-sizing:border-box}
+.fv-presentation-frame{position:relative;margin:0 auto}
 .fv-presentation .flyfish-pptx-scale-box{max-width:none;margin:0 auto}
 .fv-presentation .slide{box-shadow:0 8px 24px rgba(15,23,42,.12);color-scheme:only light;forced-color-adjust:none}
 .fv-presentation .flyfish-pptx-slide-slot:last-child .slide,.fv-presentation .flyfish-pptx-content>.slide:last-child{margin-bottom:0}
@@ -66,6 +67,7 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
   slideshow.type = 'button';
   const scroller = element('div', 'fv-presentation-scroll');
   const surface = element('div', 'fv-presentation-surface');
+  const frame = element('div', 'fv-presentation-frame');
   scroller.append(surface);
   pages.append(previous, counter, next);
   nav.append(pages, slideshow);
@@ -107,10 +109,17 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
   const syncViewportLayout = () => {
     if (!viewer || disposed) return;
     const engineScale = Math.max(0.25, scale);
-    // The public engine clamps its own scale to 25%. CSS layout zoom supplies
-    // the remaining downscale for small native panels, including scroll extents.
-    // Above that floor the compositor ratio is exactly 1.
-    viewer.scaleBox.style.zoom = viewer.presenting ? '1' : String(scale / engineScale);
+    // The public engine clamps its own scale to 25%. A clipped layout frame
+    // supplies the remaining downscale without relying on CSS zoom, whose
+    // layout/measurement behavior differs across supported WebKit versions.
+    const ratio = viewer.presenting ? 1 : scale / engineScale;
+    viewer.scaleBox.style.transform = ratio === 1 ? '' : `scale(${ratio})`;
+    viewer.scaleBox.style.transformOrigin = '0 0';
+    if (!viewer.presenting && viewer.scaleBox.style.width.endsWith('px') && viewer.scaleBox.style.height.endsWith('px')) {
+      frame.style.width = `${parseFloat(viewer.scaleBox.style.width) * ratio}px`;
+      frame.style.height = `${parseFloat(viewer.scaleBox.style.height) * ratio}px`;
+      frame.style.overflow = ratio < 1 ? 'hidden' : 'visible';
+    }
     const dimensions = viewer.slideDimensions;
     surface.style.paddingTop = !viewer.presenting && viewer.slideCount === 1 && dimensions
       ? `${Math.max(0, (readViewport().height - dimensions.height * scale) / 2)}px`
@@ -316,6 +325,11 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
     });
     viewer = nextViewer;
     if (disposed) { nextViewer.destroy(); throw context?.signal?.reason || new Error('Presentation was disposed.'); }
+    // Keep the engine's public target and its scroll ancestor unchanged. The
+    // extra frame only owns visual scaling and the resulting scroll extents.
+    nextViewer.scaleBox.replaceWith(frame);
+    frame.append(nextViewer.scaleBox);
+    resizeObserver.observe(nextViewer.scaleBox);
     await ready;
     syncViewportLayout();
     syncNavigation();

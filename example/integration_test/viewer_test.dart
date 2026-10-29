@@ -269,6 +269,12 @@ void main() {
             expect(slideWidth * actualScale, lessThanOrEqualTo(width + 1));
             expect(slideHeight * actualScale, lessThanOrEqualTo(height + 1));
             expect(
+              (scroll['width'] as num).toDouble(),
+              lessThanOrEqualTo((scroll['clientWidth'] as num).toDouble() + 1),
+              reason:
+                  'A fitted slide must not leave an unscaled scroll extent.',
+            );
+            expect(
               (rendered['width'] as num).toDouble(),
               closeTo(slideWidth * actualScale, 1),
             );

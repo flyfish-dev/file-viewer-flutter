@@ -10,6 +10,10 @@ on:
         description: Transfer public base-resource bytes using a temporary storage form (no pub credentials)
         type: boolean
         default: false
+      compatibility_only:
+        description: Verify native and web compatibility before new component versions are published
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -24,7 +28,7 @@ env:
 
 jobs:
   checks:
-    if: ${{ !inputs.pub_archive_transfer }}
+    if: ${{ !inputs.pub_archive_transfer && !inputs.compatibility_only }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

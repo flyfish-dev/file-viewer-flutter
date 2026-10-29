@@ -34,6 +34,13 @@ a new package-family version. Static analysis separately enforces public API
 documentation on every source change. Resource rebuilds preserve package README
 and changelog history; update that history explicitly for each release.
 
+For a package-family version whose components are not published yet, dispatch
+`qualify.yml` from the release branch with `compatibility_only=true` first.
+This runs the real native and Web integration matrix without pretending that
+unpublished hosted dependencies can be scored. Normal branch and pull-request
+runs retain the full archive-scoring gate. Publish the components, score the
+entry archive against their hosted versions, and then publish the entry package.
+
 Prefer `flutter pub publish` for normal uploads. If its large-file transfer is
 unreliable, `flutter pub publish --to-archive /absolute/package.tar.gz` creates a
 validated archive without publishing it. `tool/upload-pub-archive.py` uses the
