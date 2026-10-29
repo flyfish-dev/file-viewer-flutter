@@ -24,7 +24,7 @@ Windows prepares a retained composition-texture WebView through the pinned adapt
 
 `preload(source)` parses a known upcoming document in a spare session. It is optional because preloading every possible renderer consumes substantial memory and CPU. `warmUp()` reports `moduleReady` separately from `engineReady`; only measured engine initialization belongs in the latter.
 
-Background means retaining an application-owned instance while the process lives, pausing unnecessary work, and recovering after reclamation. There is no perpetual iOS background service or unconditional Android foreground service. The plugin does not request unrelated background privileges or disable an operating-system sandbox.
+Background means retaining an application-owned instance while the process lives and pausing current audio/video playback. WebView and the OS govern other background rendering, Workers and timers; the protocol does not implement a general rendering pause. Foregrounding dispatches a resize event, while renderer termination triggers a recovery attempt. Media does not resume automatically. There is no perpetual iOS background service or unconditional Android foreground service. The plugin does not request unrelated background privileges or disable an operating-system sandbox.
 
 ## Resource host
 

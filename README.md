@@ -6,6 +6,8 @@ An offline Flutter document viewer, backed by the public [File Viewer](https://g
 
 The [delivery and stable-release plan (简体中文)](docs/delivery-plan.zh-CN.md) covers integration, prewarming, platform ownership, performance acceptance and pub.dev distribution.
 
+**Developer site:** [flutter.file-viewer.app](https://flutter.file-viewer.app) · [Quick start](docs/quickstart.md) · [中文快速开始](docs/quickstart.zh-CN.md) · [Platform setup](docs/platforms.md) · [Controllers and events](docs/controller.md).
+
 ## Integrate
 
 Add the development-preview package from pub.dev:
@@ -55,7 +57,7 @@ Import `package:file_viewer_flutter/file_viewer_flutter.dart`. Declare your own 
 
 ## Warm up and reuse
 
-The host keeps one spare viewer. Leaving a preview route retains its engine and document; opening the same source reuses that session. Simultaneous previews receive separate native views. Memory pressure releases idle viewers. Backgrounding pauses work; the operating system may suspend or reclaim the process. Returning to the foreground resumes the session or recreates a terminated renderer.
+The host keeps one spare viewer. Leaving a preview route retains its engine and document; opening the same source reuses that session. Simultaneous previews receive separate native views. Memory pressure releases idle viewers. Backgrounding pauses audio/video playback; WebView and the operating system govern other background work and may suspend or reclaim the process. Foregrounding requests a layout refresh, and renderer termination triggers a recovery attempt. Media does not resume automatically.
 
 `warmUp()` initializes the shell and common parser modules. It does not claim that every Worker, WASM engine, font or document is already parsed. To parse a known upcoming document before navigation:
 
