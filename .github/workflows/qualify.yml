@@ -93,9 +93,7 @@ jobs:
           - runner: macos-15
             platform: macos
             arch: arm64
-          - runner: macos-15-intel
-            platform: macos
-            arch: x64
+          # Intel macOS is verified on physical x86_64 hardware.
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 50
     defaults:

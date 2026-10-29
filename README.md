@@ -123,6 +123,8 @@ Backgrounding pauses audio/video. The WebView and operating system may suspend o
 | Windows | WebView2 | Checksum-locked Fixed Version runtime |
 | Linux | CEF | Checksum-locked runtime with sandbox enabled |
 
+macOS is validated on physical Apple Silicon and Intel devices: six document fixtures, nine PPTX/Excel viewport checks, Worker/WASM execution and five session reattachments without parsing again. Exact environments and reproducible checks are recorded in the [qualification matrix](docs/qualification.md).
+
 All rendering resources come from the immutable public File Viewer `3.3.0` distribution. Four version-locked asset packages—base, CAD, drawing and Typst—are installed together, totaling approximately **225 MiB before application compression**. Bundled Windows and Linux engines add to the installed size. Customer applications need Flutter tooling; Node.js is only required for maintainer builds.
 
 Build machines need the locked desktop archives or a populated archive cache. Set `FILE_VIEWER_OFFLINE_BUILD=1` to fail a desktop build when its cache is missing. Runtime use does not download native engines. Remote documents, embedded external resources, codecs and system WebView versions can still affect individual files.

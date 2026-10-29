@@ -49,7 +49,7 @@ flutter build web --no-web-resources-cdn
 - 配置命令补充本地资源服务所需的 Info.plist 与 sandbox 网络 entitlement，保留其他设置。
 - 保留 WKWebView 与文档会话时，每次 Flutter 挂载使用新的原生容器，避免同一个 View 同时挂到多个 Widget。
 
-已有证据：Apple Silicon 实机，以及 macOS 15 的 x64 / ARM64 CI。发行应用还需要按自身分发方式完成签名、公证等流程。
+已通过 Apple Silicon / macOS 27.0.1 和 Intel / macOS 26.7.1 实机验证，另有 macOS 15 ARM64 CI 覆盖。两种实机架构均通过 6 个文档样例、9 组 PPTX/Excel 视图适配、Worker/WASM 执行和 5 次重开复用检查，重开无需重复解析。PPTX 适配横屏、竖屏和小视口；小表格保留原始大小，调整窗口时保留手动缩放。具体环境与复现步骤见[兼容性矩阵](https://github.com/flyfish-dev/file-viewer-flutter/blob/main/docs/qualification.md)。发行应用还需要按自身分发方式完成签名、公证等流程。
 
 ## Windows
 

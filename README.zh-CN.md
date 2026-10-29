@@ -121,6 +121,8 @@ void main() {
 | Windows | WebView2 | 随包分发固定版本引擎并校验哈希 |
 | Linux | CEF | 随包分发固定版本引擎并启用沙箱 |
 
+macOS 已通过 Apple Silicon 与 Intel 双架构实机验证：6 个文档样例、9 组 PPTX/Excel 视图适配、Worker/WASM 执行和 5 次重开复用，重开无需重复解析。具体环境与复现步骤见[兼容性矩阵](docs/qualification.md)。
+
 渲染资源来自不可变的公开 File Viewer `3.3.0` 分发包。base、CAD、drawing、Typst 四个资源包锁定同一版本、一起安装，应用压缩前合计约 **225 MiB**。Windows 和 Linux 原生引擎会增加安装体积。客户应用仅需 Flutter 工具链，Node.js 只用于维护者构建。
 
 构建机需要固定版本的桌面引擎归档或已填充的缓存。设置 `FILE_VIEWER_OFFLINE_BUILD=1` 后，桌面构建会在缺少缓存时直接失败，运行时不会下载引擎。远程文件、文档嵌入的外部资源、系统 WebView 与编解码器仍可能影响具体文档。

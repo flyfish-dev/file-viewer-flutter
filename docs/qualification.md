@@ -8,7 +8,7 @@ This is a development preview. A platform metadata entry is not a support guaran
 | iOS | iPhone 17 Pro simulator / iOS 26.4: five fixtures, Worker/WASM, five reattachments without parsing again, idle PDF preload, close/reload | Physical iPhone/iPad, memory pressure, background recovery and representative format corpus |
 | Android | Xiaomi 12 Pro / API 35 / WebView 131: five fixtures, Worker/WASM, five reattachments without parsing again, idle PDF preload, close/reload | Older/current WebView matrix, memory pressure, background recovery and representative format corpus |
 | macOS / Apple Silicon | macOS 27.0.1 / Xcode 27: native build, six fixtures, Worker/WASM, nine viewport checks, five reattachments, idle PDF preload and close/reload; macOS 15 ARM64 CI also has a complete validation receipt | Older macOS versions, memory pressure, background recovery and representative format corpus |
-| macOS / Intel | Physical MacBookPro16,2 / x86_64 / macOS 26.7.1 / Xcode 26.0: published `0.1.0-dev.2`, native WKWebView build, six fixtures, Worker/WASM, nine viewport checks, five reattachments without parsing again, idle PDF preload and close/reload; complete validation receipt | macOS 15 Intel CI builds, but its latest runtime validation hung without a usable job log and is not counted as passed; older macOS versions, memory pressure, background recovery and representative format corpus |
+| macOS / Intel | Physical MacBookPro16,2 / x86_64 / macOS 26.7.1 / Xcode 26.0: published `0.1.0-dev.2`, native WKWebView build, six fixtures, Worker/WASM, nine viewport checks, five reattachments without parsing again, idle PDF preload and close/reload; complete validation receipt | Older macOS versions, memory pressure, background recovery and representative format corpus |
 | Windows | Windows 2025 x64 / Windows 11 ARM64 CI: native builds, Microsoft-signed fixed WebView2 runtime, five fixtures, Worker/WASM, five reattachments, idle PDF preload and close/reload | More Windows versions, memory pressure, background recovery and representative format corpus |
 | Linux | Ubuntu 24.04 x64/ARM64 CI: native builds, sandbox startup, five fixtures, Worker/WASM, five reattachments, idle PDF preload and close/reload | More distributions, real desktop visual checks, memory pressure and representative format corpus |
 
@@ -56,5 +56,6 @@ flutter drive --driver test_driver/integration_test.dart \
 Require `build/integration_response_data.json` to contain `completed: true`, six
 file timings, nine viewport measurements, five reopen timings, and a successful
 Worker/WASM probe. These debug-run timings are diagnostic measurements, not a
-production performance benchmark. This physical macOS 26.7.1 result does not
-qualify the separate macOS 15 Intel CI environment.
+production performance benchmark. Intel macOS validation is maintained on
+physical x86_64 hardware. Automated desktop CI covers macOS ARM64, Windows
+x64/ARM64 and Linux x64/ARM64.

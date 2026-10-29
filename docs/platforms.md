@@ -49,7 +49,7 @@ Initial evidence: Chrome 156, JavaScript and Dart WASM builds, five owned format
 - Setup adds Info.plist and sandbox network entitlements needed by local resources while preserving other settings.
 - Retained WKWebViews and document sessions use a fresh native container on each Flutter attachment, keeping one View from attaching to multiple Widgets.
 
-Initial evidence: an Apple Silicon device and macOS 15 x64 / ARM64 CI. App signing and notarization remain part of your application's distribution process.
+Verified on physical Apple Silicon / macOS 27.0.1 and Intel / macOS 26.7.1 devices, with additional macOS 15 ARM64 CI coverage. Both physical architectures passed six document fixtures, nine PPTX/Excel viewport checks, Worker/WASM execution and five session reattachments without parsing again. PPTX fits landscape, portrait and small viewports; small spreadsheets remain at natural size and manual zoom survives resizing. See the [qualification matrix](https://github.com/flyfish-dev/file-viewer-flutter/blob/main/docs/qualification.md) for exact environments and reproducible checks. App signing and notarization remain part of your application's distribution process.
 
 ## Windows
 
