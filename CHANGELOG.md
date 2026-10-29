@@ -14,6 +14,8 @@
   and add slide navigation and Flutter-controlled slideshow entry and exit.
 - Support sub-25% fitting on older WebKit with a clipped transform frame that
   preserves actual slide bounds and scroll extents.
+- Keep delayed, layout-generated scroll events from disabling automatic fitting
+  while native WebView viewport changes are still arriving.
 - Restore format-aware automatic fitting instead of forcing width fitting on all
   documents; small spreadsheets keep their natural size.
 - Expose the initial `FileViewer.fit` policy and restore automatic fitting with

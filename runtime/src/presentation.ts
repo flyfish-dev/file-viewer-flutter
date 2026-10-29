@@ -85,8 +85,7 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
   let disposed = false;
   let page = 1;
   let scale = 1;
-  let layoutChanges = 0;
-  const layoutFrames = new Set<number>();
+  let userScrollUntil = 0;
   const pendingFrames = new Map<number, () => void>();
   let presentationTransition = 0;
   let restoringReadingPage = false;
@@ -145,7 +144,7 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
       width: scroller.scrollWidth, height: scroller.scrollHeight,
       clientWidth: scroller.clientWidth, clientHeight: scroller.clientHeight,
     },
-    extra: { slideDimensions: viewer?.slideDimensions, viewport: readViewport(), renderedSlide: renderedSlideSize(), presentationAvailable: true, presenting: viewer?.presenting || false, presentationPage: viewer?.presenting ? viewer.presentationSlideNumber : null },
+    extra: { slideDimensions: viewer?.slideDimensions, viewport: readViewport(), hostViewport: { width: shell.clientWidth, height: shell.clientHeight }, renderedSlide: renderedSlideSize(), presentationAvailable: true, presenting: viewer?.presenting || false, presentationPage: viewer?.presenting ? viewer.presentationSlideNumber : null },
   });
   const notify = (action: FileViewerViewStateChangeAction, source: FileViewerViewStateChangeSource) => {
     viewEvents.emit({ state: viewState(), action, source, timestamp: Date.now() });
@@ -162,12 +161,10 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
   const setScale = async (value: number, action: FileViewerViewStateChangeAction = 'zoom-change', source: FileViewerViewStateChangeSource = 'api') => {
     if (!Number.isFinite(value) || value <= 0) return zoomState();
     scale = Math.min(3, Math.max(0.05, value));
-    layoutChanges++;
+    userScrollUntil = 0;
     await viewer?.setZoom(Math.max(0.25, scale) * 100);
     if (disposed) return zoomState();
     syncViewportLayout();
-    const frame = document.defaultView!.requestAnimationFrame(() => { layoutChanges--; layoutFrames.delete(frame); });
-    layoutFrames.add(frame);
     zoomEvents.emit();
     notify(action, source);
     return zoomState();
@@ -216,8 +213,19 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
     const index = slots.findIndex(slot => slot.getBoundingClientRect().bottom > top + 24);
     if (index >= 0) page = index + 1;
     syncNavigation();
-    notify('scroll', layoutChanges ? 'viewer' : 'user');
+    // WebKit may deliver layout-induced scroll events several frames later.
+    // Only actual pointer, wheel, touch or keyboard intent is user interaction;
+    // late programmatic scrolling must not suspend the core resize-fit policy.
+    notify('scroll', Date.now() <= userScrollUntil ? 'user' : 'viewer');
   };
+  const noteScrollIntent = () => { userScrollUntil = Date.now() + 1500; };
+  const onScrollKey = (event: KeyboardEvent) => {
+    if (!event.altKey && !event.ctrlKey && !event.metaKey &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key) &&
+        !(event.target as HTMLElement)?.matches('input,textarea,[contenteditable]')) noteScrollIntent();
+  };
+  for (const name of ['wheel', 'pointerdown', 'touchstart']) scroller.addEventListener(name, noteScrollIntent, { passive: true });
+  scroller.addEventListener('keydown', onScrollKey);
   previous.onclick = () => goTo(page - 1);
   next.onclick = () => goTo(page + 1);
   slideshow.onclick = () => { void viewer?.togglePresentation(page); };
@@ -259,7 +267,6 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
     disposed = true;
     rejectReady?.(context?.signal?.reason || new DOMException('Presentation disposed.', 'AbortError'));
     resizeObserver.disconnect();
-    for (const frame of layoutFrames) document.defaultView!.cancelAnimationFrame(frame);
     for (const [frame, complete] of pendingFrames) {
       document.defaultView!.cancelAnimationFrame(frame);
       complete();
@@ -268,6 +275,8 @@ export const renderPresentation: FileRenderHandler = async (buffer, target, _typ
     viewer?.destroy();
     shell.removeEventListener('keydown', onKey);
     scroller.removeEventListener('scroll', onScroll);
+    for (const name of ['wheel', 'pointerdown', 'touchstart']) scroller.removeEventListener(name, noteScrollIntent);
+    scroller.removeEventListener('keydown', onScrollKey);
     unregisterFileViewerZoomProvider(shell);
     unregisterFileViewerViewStateProvider(shell);
     context?.signal?.removeEventListener('abort', cleanup);

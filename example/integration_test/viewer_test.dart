@@ -234,8 +234,19 @@ void main() {
               final extra = state['extra'] as Map;
               final rendered = extra['renderedSlide'] as Map?;
               final dimensions = extra['slideDimensions'] as Map;
+              final hostViewport = extra['hostViewport'] as Map;
+              final available = extra['viewport'] as Map;
               final scale = (state['scale'] as num).toDouble();
+              final widthFit =
+                  (available['width'] as num) / (dimensions['width'] as num);
+              final heightFit =
+                  (available['height'] as num) / (dimensions['height'] as num);
+              final expectedFit = widthFit < heightFit ? widthFit : heightFit;
+              final nativeBounds = tester.getSize(find.byKey(viewportKey));
               if (rendered != null &&
+                  ((hostViewport['width'] as num) - nativeBounds.width).abs() <
+                      1 &&
+                  (scale - expectedFit).abs() < 0.015 &&
                   ((rendered['width'] as num) -
                               (dimensions['width'] as num) * scale)
                           .abs() <
