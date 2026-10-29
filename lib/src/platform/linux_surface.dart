@@ -9,6 +9,7 @@ import '../models.dart';
 import '../resources/resource_host.dart';
 import 'surface.dart';
 
+/// Adapts one packaged Linux CEF view to the shared session protocol.
 class LinuxViewerSurface implements FileViewerSurface {
   static Future<void>? _managerReady;
   cef.WebViewController? _controller;

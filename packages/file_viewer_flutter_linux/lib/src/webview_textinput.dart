@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+/// Connects a texture-backed browser to Flutter's delta-model text input.
 mixin WebeViewTextInput implements DeltaTextInputClient {
   @override
   TextEditingValue? currentTextEditingValue;
@@ -12,6 +13,7 @@ mixin WebeViewTextInput implements DeltaTextInputClient {
 
   TextInputConnection? _textInputConnection;
 
+  /// Activates Flutter IME routing except where native Windows input owns it.
   void attachTextInputClient() {
     // On Windows the OS IME is driven by the native WM_IME pipeline (the Flutter
     // text-input/delta path does not deliver composition for an OSR browser on
@@ -27,10 +29,14 @@ mixin WebeViewTextInput implements DeltaTextInputClient {
     _textInputConnection?.show();
   }
 
+  /// Closes the Flutter text-input connection when editable focus is lost.
   void detachTextInputClient() {
     _textInputConnection?.close();
   }
 
+  /// Anchors IME candidates to the browser caret in logical widget coordinates.
+  ///
+  /// [offset] is the widget's global origin; [y] is the caret's bottom edge.
   void updateIMEComposionPosition(double x, double y, double height, Offset offset) {
     // x/y are the caret position inside the webview (logical px), with y at the
     // caret's bottom (the native side reports the element/character bottom);

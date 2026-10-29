@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+/// Displays delayed CEF tooltip text in the Flutter overlay above its view.
 class WebviewTooltip {
+  /// Uses the view [context] to obtain its overlay and render-box bounds.
   WebviewTooltip(BuildContext context) {
     _overlayState = Overlay.of(context);
     _box = context.findRenderObject() as RenderBox;
@@ -11,6 +13,7 @@ class WebviewTooltip {
   OverlayEntry? _overlayEntry;
   Timer? _timer;
   TooltipStatus _eStatus = TooltipStatus.hide;
+  /// Pointer position relative to the browser widget, used to place the tooltip.
   Offset cursorOffset = Offset.zero;
   late RenderBox _box;
   final TextStyle _textStyle =
@@ -81,6 +84,7 @@ class WebviewTooltip {
 
   bool _disposed = false;
 
+  /// Cancels pending display and removes any existing tooltip overlay.
   void dispose() {
     if (_disposed) return;
     _disposed = true;
@@ -90,6 +94,7 @@ class WebviewTooltip {
     _overlayEntry = null;
   }
 
+  /// Schedules [text] for display, or hides the tooltip when [text] is empty.
   void showToolTip(String text) {
     if (_disposed) return;
     if (text.isEmpty) {
@@ -109,11 +114,12 @@ class WebviewTooltip {
   }
 }
 
+/// Lifecycle of the adapter's delayed tooltip overlay.
 enum TooltipStatus {
-  //Tooltip is prepare to show, Timer is running
+  /// The display timer is waiting to show the tooltip.
   prepare,
-  //Tooltip is alreay shown
+  /// The tooltip's overlay entry is visible.
   shown,
-  //Tooltip is hide or uninitialized
+  /// No tooltip is currently visible or scheduled.
   hide
 }

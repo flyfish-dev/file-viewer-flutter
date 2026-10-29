@@ -13,7 +13,17 @@ import 'session.dart';
 import 'session_pool.dart';
 import 'source.dart';
 
+/// Owns offline resources and the pool of reusable viewer sessions.
+///
+/// Share one runtime through the application host. It retains a spare session
+/// to reduce repeated shell loads, while [trimMemory] releases idle instances.
+/// Listen to this notifier for [state] changes, and use [shutdown] for permanent
+/// asynchronous cleanup of an application-owned instance.
 class FileViewerRuntime extends ChangeNotifier {
+  /// Creates an independent runtime using packaged platform resources by default.
+  ///
+  /// `resourceHost` and `surfaceFactory` are advanced integration and testing
+  /// hooks; ordinary applications should leave both unset.
   FileViewerRuntime({
     ViewerResourceHost? resourceHost,
     FileViewerSurface Function()? surfaceFactory,
@@ -25,6 +35,10 @@ class FileViewerRuntime extends ChangeNotifier {
     );
   }
 
+  /// Default application-scoped runtime used when no explicit runtime is supplied.
+  ///
+  /// Once shut down, this instance cannot be restarted; create a new runtime
+  /// for a new application scope.
   static final FileViewerRuntime instance = FileViewerRuntime();
   final ViewerResourceHost _resources;
   final FileViewerSurface Function() _surfaceFactory;
@@ -35,7 +49,10 @@ class FileViewerRuntime extends ChangeNotifier {
   int _epoch = 0;
   Future<void>? _closing;
 
+  /// Current runtime lifecycle; distinct from the readiness of any document.
   FileViewerRuntimeState get state => _state;
+
+  /// Number of sessions currently leased, excluding the retained idle spare.
   int get activeSessionCount => _pool.leasedCount;
 
   void _setState(FileViewerRuntimeState state) {
@@ -66,6 +83,11 @@ class FileViewerRuntime extends ChangeNotifier {
     return session;
   }
 
+  /// Prepares a spare viewer and returns the preparation stages actually measured.
+  ///
+  /// Concurrent calls reuse pool initialization. Module preparation does not
+  /// initialize every document engine; use [preload] for a specific upcoming
+  /// source. A failed warm-up can be retried unless the runtime is disposed.
   Future<FileViewerWarmupReport> warmUp() async {
     if (_state == FileViewerRuntimeState.cold) {
       _setState(FileViewerRuntimeState.booting);
@@ -110,6 +132,7 @@ class FileViewerRuntime extends ChangeNotifier {
     }
   }
 
+  /// Leases one exclusive session for a mounted viewer or document preload.
   @internal
   Future<FileViewerSession> acquire() async {
     final epoch = _epoch;
@@ -128,18 +151,25 @@ class FileViewerRuntime extends ChangeNotifier {
     return session;
   }
 
+  /// Returns a leased session, retaining it only when healthy and requested.
   @internal
   Future<void> release(FileViewerSession session, {bool retain = true}) =>
       _pool.release(session, retain: retain && session.isHealthy);
 
+  /// Releases idle sessions while preserving sessions attached to active widgets.
   Future<void> trimMemory() => _pool.trim();
 
+  /// Clears loaded documents in all sessions and releases idle viewer instances.
+  ///
+  /// Active widgets keep their session attachments, but their documents are
+  /// unloaded. In-flight session acquisitions are cancelled by this reset.
   Future<void> clearSessions() async {
     ++_epoch;
     await Future.wait(_pool.instances.map((session) => session.clear()));
     await _pool.trim();
   }
 
+  /// Forwards application background/foreground state to healthy sessions.
   @internal
   Future<void> setBackgrounded(bool backgrounded) async {
     await Future.wait(
@@ -155,11 +185,16 @@ class FileViewerRuntime extends ChangeNotifier {
     );
   }
 
+  /// Permanently disposes the runtime and waits for native/resource cleanup.
+  ///
+  /// Stop using associated viewer widgets and controllers before shutdown.
+  /// Repeated calls return the same cleanup future.
   Future<void> shutdown() {
     dispose();
     return _closing!;
   }
 
+  /// Starts permanent cleanup; use [shutdown] when cleanup must be awaited.
   @override
   void dispose() {
     if (_state == FileViewerRuntimeState.disposed) return;

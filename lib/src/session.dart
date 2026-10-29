@@ -9,7 +9,9 @@ import 'platform/surface.dart';
 import 'resources/resource_host.dart';
 import 'source.dart';
 
+/// Owns one platform surface, document registration and versioned bridge session.
 class FileViewerSession implements ViewerCommands {
+  /// Creates a session with explicit initialization and teardown time budgets.
   FileViewerSession({
     required this.id,
     required this.surface,
@@ -20,10 +22,19 @@ class FileViewerSession implements ViewerCommands {
     _ready.future.ignore();
   }
 
+  /// Runtime-local identifier used to scope source registrations.
   final String id;
+
+  /// Exclusive platform surface retained for this session's lifetime.
   final FileViewerSurface surface;
+
+  /// Host used to register sources without exposing native paths to JavaScript.
   final ViewerResourceHost resources;
+
+  /// Maximum duration for establishing the surface and shell bridge.
   final Duration initializationTimeout;
+
+  /// Maximum duration to wait for JavaScript teardown before native disposal.
   final Duration disposalTimeout;
   final _ready = Completer<void>();
   final _pending = <int, Completer<Object?>>{};
@@ -36,12 +47,20 @@ class FileViewerSession implements ViewerCommands {
   String? _optionsFingerprint;
   Map<String, Object?> _currentOptions = const {};
   String? _activeSourceId;
+
+  /// Observed preparation stages, assigned after successful initialization.
   FileViewerWarmupReport? warmupReport;
 
+  /// Broadcast events from this session, excluding stale document versions.
   Stream<FileViewerEvent> get events => _events.stream;
+
+  /// Whether the surface remains usable and has not been disposed.
   bool get isHealthy => _healthy && !_disposed;
+
+  /// Builds the widget owning the session's single platform view.
   Widget buildView(BuildContext context) => surface.buildView(context);
 
+  /// Establishes the bridge and prepares modules, disposing on failure.
   Future<void> initialize() async {
     final stopwatch = Stopwatch()..start();
     try {
@@ -233,6 +252,7 @@ class FileViewerSession implements ViewerCommands {
     }
   }
 
+  /// Cancels pending commands, revokes the source and disposes the platform view.
   Future<void> dispose() async {
     if (_disposed) return;
     _fail(

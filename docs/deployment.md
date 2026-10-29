@@ -36,7 +36,7 @@ Fully isolated builds also need a prepared Flutter SDK, every Dart dependency, p
 
 ## Upgrades and production qualification
 
-The current release is development preview `0.1.0-dev.1`. Upgrade the package family together, retain the lockfile, inspect host setup changes and retest first content, search/zoom, route reopen, background recovery and memory pressure on target devices.
+The current release is development preview `0.1.0-dev.2`. Upgrade the package family together, retain the lockfile, inspect host setup changes and retest first content, search/zoom, route reopen, background recovery and memory pressure on target devices.
 
 Stable qualification still requires physical iOS devices, broader OS/device and document coverage, lifecycle checks and measured performance budgets. Consult the [qualification matrix](https://github.com/flyfish-dev/file-viewer-flutter/blob/main/docs/qualification.md).
 

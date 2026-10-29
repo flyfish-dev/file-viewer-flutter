@@ -4,7 +4,14 @@ import 'package:flutter/widgets.dart';
 
 import 'runtime.dart';
 
+/// Shares an application's viewer runtime and starts warm-up after its first frame.
+///
+/// Place this near the application root. It forwards memory-pressure and
+/// lifecycle notifications to the runtime, releasing idle sessions when needed.
+/// It does not start an operating-system background service or guarantee that
+/// a suspended process remains resident.
 class FileViewerHost extends StatefulWidget {
+  /// Wraps [child] and optionally uses an application-owned [runtime].
   const FileViewerHost({
     super.key,
     required this.child,
@@ -12,10 +19,24 @@ class FileViewerHost extends StatefulWidget {
     this.onWarmupError,
   });
 
+  /// Application subtree that can obtain the shared runtime with [of].
   final Widget child;
+
+  /// Runtime to share, defaulting to [FileViewerRuntime.instance].
+  ///
+  /// The host does not dispose it when removed. Call its `shutdown` method when
+  /// permanently closing an application-owned runtime.
   final FileViewerRuntime? runtime;
+
+  /// Receives asynchronous warm-up failures without replacing the application UI.
+  ///
+  /// A later viewer load can retry initialization. Avoid logging source secrets
+  /// when handling underlying diagnostics.
   final void Function(Object error, StackTrace stack)? onWarmupError;
 
+  /// Returns the nearest shared runtime, or [FileViewerRuntime.instance].
+  ///
+  /// Registers an inherited dependency when a host is present.
   static FileViewerRuntime of(BuildContext context) =>
       context
           .dependOnInheritedWidgetOfExactType<_ViewerRuntimeScope>()

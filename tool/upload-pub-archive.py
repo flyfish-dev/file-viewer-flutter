@@ -16,14 +16,17 @@ import urllib.request
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / '.release/pub-release'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('package')
 parser.add_argument('archive', type=Path)
 parser.add_argument('--proxy', help='Use an existing local HTTP proxy without changing system settings.')
+parser.add_argument('--release-directory', type=Path,
+                    default=ROOT / '.release/pub-release',
+                    help='Directory containing staging.json and private publication receipts.')
 parser.add_argument('--transfer-receipt', type=Path,
                     help='Finalize a CI storage transfer after verifying its downloaded archive locally.')
 args = parser.parse_args()
+OUTPUT = args.release_directory.resolve(strict=True)
 release = json.loads((OUTPUT / 'staging.json').read_text())
 allowed = {'file_viewer_flutter', 'file_viewer_flutter_assets',
            'file_viewer_flutter_assets_cad', 'file_viewer_flutter_assets_drawing',
@@ -81,7 +84,7 @@ def pub_request(url):
         'Authorization': 'Bearer ' + json.loads(credentials.read_text())['accessToken'],
         'Accept': 'application/vnd.pub.v2+json',
         'Content-Type': 'application/json',
-        'User-Agent': 'file-viewer-flutter-release/0.1.0-dev.1',
+        'User-Agent': 'file-viewer-flutter-release/' + release['version'],
     })
     with client.open(request, timeout=60) as response:
         return json.load(response)

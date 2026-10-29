@@ -4,7 +4,7 @@
 
 ## 开始之前
 
-使用 Flutter **3.47 或更高版本**、Dart **3.13 或更高版本**。当前发布版为 `0.1.0-dev.1`，属于开发预览；Android、iOS、Web、Windows、macOS、Linux 的实测范围见[平台配置](platforms.zh-CN.md)。维护与验收工具链为 Flutter 3.47.4 / Dart 3.13.3。
+使用 Flutter **3.47 或更高版本**、Dart **3.13 或更高版本**。当前发布版为 `0.1.0-dev.2`，属于开发预览；Android、iOS、Web、Windows、macOS、Linux 的实测范围见[平台配置](platforms.zh-CN.md)。维护与验收工具链为 Flutter 3.47.4 / Dart 3.13.3。
 
 客户应用只需要 Flutter 工具链，无需 Node.js，也无需自行构建 JavaScript 内核。
 
@@ -16,7 +16,7 @@
 dependencies:
   flutter:
     sdk: flutter
-  file_viewer_flutter: 0.1.0-dev.1
+  file_viewer_flutter: 0.1.0-dev.2
 ```
 
 ```sh

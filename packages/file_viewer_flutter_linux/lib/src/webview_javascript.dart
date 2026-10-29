@@ -8,9 +8,9 @@ class JavascriptMessage {
   /// The contents of the message that was sent by the JavaScript code.
   final String message;
 
-  //  The callbackId of the JavaScript code
+  /// Native callback identifier to use when completing this channel request.
   final String callbackId;
-  //  the frameId of the webview frame
+  /// Native browser-frame identifier associated with this request.
   final String frameId;
 }
 

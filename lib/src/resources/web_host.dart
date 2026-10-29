@@ -7,8 +7,10 @@ import '../source.dart';
 import 'manifest.dart';
 import 'resource_host.dart';
 
+/// Creates a browser resource host using deployed Flutter asset URLs.
 ViewerResourceHost createResourceHost() => WebViewerResourceHost();
 
+/// Maps sources to browser-accessible URLs and owns temporary blob URLs.
 class WebViewerResourceHost implements ViewerResourceHost {
   final _manifest = ViewerAssetManifest();
   final _objectUrls = <String, String>{};

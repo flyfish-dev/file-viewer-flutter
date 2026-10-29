@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0-dev.2
+
+- Align with the File Viewer Flutter 0.1.0-dev.2 package family.
+
 ## 0.1.0-dev.1
 
 Initial isolated macOS adapter derived from InAppWebView 1.2.0-beta.3.

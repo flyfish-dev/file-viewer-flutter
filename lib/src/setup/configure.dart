@@ -2,16 +2,26 @@ import 'dart:io';
 
 import 'package:xml/xml.dart';
 
+/// One planned, reviewable host-configuration change produced by setup.
 class ViewerSetupChange {
+  /// Records the original and proposed text for a project-relative file.
   const ViewerSetupChange({
     required this.relativePath,
     required this.before,
     required this.after,
     required this.reason,
   });
+
+  /// File path relative to the selected Flutter application root.
   final String relativePath;
+
+  /// Existing file contents, or empty text when creating a configuration file.
   final String before;
+
+  /// Proposed complete file contents after the change.
   final String after;
+
+  /// Human-readable explanation displayed by the setup command.
   final String reason;
 }
 
@@ -30,9 +40,9 @@ XmlElement _plistDict(XmlElement dict, String key) {
       return value;
     }
   }
-  final result = XmlElement(XmlName('dict'));
+  final result = XmlElement(XmlName.parts('dict'));
   dict.children.addAll([
-    XmlElement(XmlName('key'), [], [XmlText(key)]),
+    XmlElement(XmlName.parts('key'), [], [XmlText(key)]),
     result,
   ]);
   return result;
@@ -45,16 +55,19 @@ void _plistBool(XmlElement dict, String key) {
         children[index].innerText == key) {
       final existing = children[index + 1];
       if (existing.name.local == 'true') return;
-      existing.replace(XmlElement(XmlName('true')));
+      existing.replace(XmlElement(XmlName.parts('true')));
       return;
     }
   }
   dict.children.addAll([
-    XmlElement(XmlName('key'), [], [XmlText(key)]),
-    XmlElement(XmlName('true')),
+    XmlElement(XmlName.parts('key'), [], [XmlText(key)]),
+    XmlElement(XmlName.parts('true')),
   ]);
 }
 
+/// Adds local networking or sandbox network entitlements to an Apple plist.
+///
+/// Preserves unrelated settings and returns [source] unchanged when configured.
 String configureViewerPlist(String source, {bool entitlements = false}) {
   final document = XmlDocument.parse(source);
   final dict = _child(document.rootElement, 'dict');
@@ -74,6 +87,10 @@ String configureViewerPlist(String source, {bool entitlements = false}) {
       : '${document.toXmlString(pretty: true)}\n';
 }
 
+/// Adds Android network permission and a scoped network-config reference.
+///
+/// Preserves an existing XML configuration reference and rejects unsupported
+/// references so the setup command cannot silently overwrite another policy.
 ({String manifest, String configName}) configureViewerAndroidManifest(
   String source,
 ) {
@@ -91,8 +108,15 @@ String configureViewerPlist(String source, {bool entitlements = false}) {
   if (!internet) {
     document.rootElement.children.insert(
       0,
-      XmlElement(XmlName('uses-permission'), [
-        XmlAttribute(XmlName('name', 'android'), 'android.permission.INTERNET'),
+      XmlElement(XmlName.parts('uses-permission'), [
+        XmlAttribute(
+          XmlName.parts(
+            'name',
+            prefix: 'android',
+            namespaceUri: 'http://schemas.android.com/apk/res/android',
+          ),
+          'android.permission.INTERNET',
+        ),
       ]),
     );
   }
@@ -112,6 +136,10 @@ String configureViewerPlist(String source, {bool entitlements = false}) {
   );
 }
 
+/// Allows loopback cleartext traffic while preserving existing Android rules.
+///
+/// Only `localhost` and `127.0.0.1` receive new exceptions. An empty [source]
+/// creates a network-security configuration instead of a global exception.
 String configureViewerAndroidNetwork(String source) {
   final document = XmlDocument.parse(
     source.isEmpty ? '<network-security-config/>' : source,
@@ -135,12 +163,12 @@ String configureViewerAndroidNetwork(String source) {
     if (!existing) {
       document.rootElement.children.add(
         XmlElement(
-          XmlName('domain-config'),
-          [XmlAttribute(XmlName('cleartextTrafficPermitted'), 'true')],
+          XmlName.parts('domain-config'),
+          [XmlAttribute(XmlName.parts('cleartextTrafficPermitted'), 'true')],
           [
             XmlElement(
-              XmlName('domain'),
-              [XmlAttribute(XmlName('includeSubdomains'), 'false')],
+              XmlName.parts('domain'),
+              [XmlAttribute(XmlName.parts('includeSubdomains'), 'false')],
               [XmlText(domain)],
             ),
           ],
@@ -168,6 +196,10 @@ String _insertOnce(
   return source.replaceFirst(anchor, replacement);
 }
 
+/// Plans host setup changes for [directory] without writing them to disk.
+///
+/// Uses existing native platform directories unless [platforms] is specified.
+/// Rejects unsupported templates and paths outside the selected application.
 Future<List<ViewerSetupChange>> planViewerSetup(
   Directory directory, {
   Set<String>? platforms,

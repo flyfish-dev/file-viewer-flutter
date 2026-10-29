@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://pub.dev/packages/file_viewer_flutter"><img src="https://img.shields.io/pub/v/file_viewer_flutter?include_prereleases&label=pub.dev&color=0891b2" alt="pub.dev 软件包"></a>
+  <a href="https://pub.dev/packages/file_viewer_flutter/score"><img src="https://img.shields.io/pub/points/file_viewer_flutter?color=0891b2" alt="pub.dev 质量评分"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-%E2%89%A5%203.47-02569B?logo=flutter" alt="Flutter 3.47 及以上"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-64748b" alt="Apache 2.0 许可证"></a>
 </p>
@@ -25,7 +26,7 @@
 
 File Viewer for Flutter 将 [File Viewer](https://github.com/flyfish-dev/file-viewer) 的共享渲染核心接入 Flutter 应用。本仓库维护 Flutter 组件、控制器、应用生命周期、原生 WebView 适配器和离线资源包；文档渲染引擎及浏览器生态集成由主仓库维护。
 
-> **开发预览版：`0.1.0-dev.1`。** 目标平台包括 Android、iOS、Web、Windows、macOS 与 Linux。实际构建和样例验证范围见[兼容性矩阵](docs/qualification.md)，用于生产前请验证自己的设备和业务文件集。
+> **开发预览版：`0.1.0-dev.2`。** 目标平台包括 Android、iOS、Web、Windows、macOS 与 Linux。实际构建和样例验证范围见[兼容性矩阵](docs/qualification.md)，用于生产前请验证自己的设备和业务文件集。
 
 ## 核心能力
 
@@ -43,7 +44,7 @@ File Viewer for Flutter 将 [File Viewer](https://github.com/flyfish-dev/file-vi
 
 ```yaml
 dependencies:
-  file_viewer_flutter: 0.1.0-dev.1
+  file_viewer_flutter: 0.1.0-dev.2
 ```
 
 在应用目录安装依赖并配置原生宿主：

@@ -9,7 +9,14 @@ import 'runtime.dart';
 import 'session.dart';
 import 'source.dart';
 
+/// Displays a document inside the constraints supplied by its parent.
+///
+/// Place it in a bounded widget, such as an `Expanded` or `SizedBox`, and wrap
+/// the application in [FileViewerHost] to reuse its runtime. Changing [source]
+/// loads another document; removing the widget retains one reusable session by
+/// default. Use [onEvent] to distinguish shell attachment from document readiness.
 class FileViewer extends StatefulWidget {
+  /// Creates a preview of [source] with optional control and lifecycle callbacks.
   const FileViewer({
     super.key,
     required this.source,
@@ -24,18 +31,50 @@ class FileViewer extends StatefulWidget {
     this.errorBuilder,
   });
 
+  /// Original document to preview; changes trigger a new load.
   final FileViewerSource source;
+
+  /// Optional controller owned and disposed by the application.
+  ///
+  /// Use a separate controller for each simultaneously mounted viewer.
   final FileViewerController? controller;
+
+  /// Explicit runtime, otherwise inherited from [FileViewerHost.of].
   final FileViewerRuntime? runtime;
+
+  /// Viewer chrome theme: `system`, `light` or `dark`.
+  ///
+  /// Document colors remain under the renderer's control.
   final String theme;
+
+  /// Viewer UI locale, for example `en-US` or `zh-CN`; `auto` uses detection.
+  ///
+  /// This selects interface translations and does not translate file content.
   final String locale;
 
   /// Initial layout policy. Auto uses the shared renderer's format-specific
   /// fit, follows viewport changes until interaction, and preserves manual zoom.
   final String fit;
+
+  /// Whether to retain the detached session for reuse when this widget leaves.
+  ///
+  /// Memory pressure may evict idle sessions. A native view can be attached to
+  /// only one widget at a time; retained sessions are not background services.
   final bool retainSession;
+
+  /// Receives runtime and document events, including `ready` and `documentReady`.
+  ///
+  /// Reset application readiness whenever starting a new document load.
   final FileViewerEventCallback? onEvent;
+
+  /// Receives initialization or document-load failures shown by this widget.
+  ///
+  /// Controller operation failures are returned by their own futures instead.
   final void Function(Object error)? onError;
+
+  /// Builds custom failure UI with a retry callback that recreates the session.
+  ///
+  /// When omitted, a centered diagnostic and Retry button are displayed.
   final Widget Function(BuildContext context, Object error, VoidCallback retry)?
   errorBuilder;
 

@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://pub.dev/packages/file_viewer_flutter"><img src="https://img.shields.io/pub/v/file_viewer_flutter?include_prereleases&label=pub.dev&color=0891b2" alt="pub.dev package"></a>
+  <a href="https://pub.dev/packages/file_viewer_flutter/score"><img src="https://img.shields.io/pub/points/file_viewer_flutter?color=0891b2" alt="pub.dev quality points"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-%E2%89%A5%203.47-02569B?logo=flutter" alt="Flutter 3.47 or later"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-64748b" alt="Apache 2.0 license"></a>
 </p>
@@ -25,7 +26,7 @@
 
 File Viewer for Flutter brings the [File Viewer](https://github.com/flyfish-dev/file-viewer) rendering core to Flutter applications. This repository maintains the Flutter widget, controllers, application lifecycle, native WebView adapters and packaged offline resources. The main repository maintains the shared rendering engines and browser integrations.
 
-> **Development preview — `0.1.0-dev.1`.** The delivery targets are Android, iOS, Web, Windows, macOS and Linux. Build and fixture evidence is recorded in the [qualification matrix](docs/qualification.md); production adoption requires validation against your devices and document corpus.
+> **Development preview — `0.1.0-dev.2`.** The delivery targets are Android, iOS, Web, Windows, macOS and Linux. Build and fixture evidence is recorded in the [qualification matrix](docs/qualification.md); production adoption requires validation against your devices and document corpus.
 
 ## Why File Viewer for Flutter
 
@@ -43,7 +44,7 @@ Requires Flutter **3.47+** and Dart **3.13+**. The pinned development toolchain 
 
 ```yaml
 dependencies:
-  file_viewer_flutter: 0.1.0-dev.1
+  file_viewer_flutter: 0.1.0-dev.2
 ```
 
 From your application directory, install dependencies and configure the native host:

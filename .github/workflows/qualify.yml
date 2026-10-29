@@ -26,7 +26,7 @@ jobs:
   checks:
     if: ${{ !inputs.pub_archive_transfer }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install pinned Flutter
@@ -47,11 +47,22 @@ jobs:
       - name: Build local SDK
         run: python3 tool/bundle-sdk.py
       - name: Validate isolated pub archives
-        run: python3 tool/check-pub.py
+        run: python3 tool/check-pub.py --staging-directory "$RUNNER_TEMP/file-viewer-pub"
+      - name: Require full publication score
+        run: |
+          dart pub global activate pana 0.23.19
+          (cd "$RUNNER_TEMP/file-viewer-pub/file_viewer_flutter" && flutter pub publish --to-archive "$RUNNER_TEMP/file_viewer_flutter.tar.gz")
+          python3 tool/check-score.py "$RUNNER_TEMP/file_viewer_flutter.tar.gz"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: local-sdk
           path: .release/*sdk.tar.gz*
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: publication-score
+          path: .release/pub-score/
           retention-days: 14
 
   desktop:

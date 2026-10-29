@@ -37,7 +37,8 @@ with context as temporary:
     main.mkdir()
     for name in ['lib', 'bin', 'windows', 'docs']:
         shutil.copytree(root / name, main / name, ignore=skip, symlinks=True)
-    for name in ['pubspec.yaml', '.pubignore', 'README.md', 'CHANGELOG.md', 'LICENSE']:
+    for name in ['pubspec.yaml', '.pubignore', 'analysis_options.yaml',
+                 'README.md', 'README.zh-CN.md', 'CHANGELOG.md', 'LICENSE']:
         shutil.copy2(root / name, main / name)
     (main / 'example').mkdir()
     for name in ['lib', 'assets']:

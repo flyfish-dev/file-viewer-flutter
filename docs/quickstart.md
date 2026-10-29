@@ -4,7 +4,7 @@ Add file previews to a Flutter screen. `FileViewerHost` owns application-scoped 
 
 ## Before you begin
 
-Use Flutter **3.47 or later** and Dart **3.13 or later**. The published release is `0.1.0-dev.1`, a development preview. See [platform setup](platforms.md) for the measured Android, iOS, Web, Windows, macOS and Linux scope. The pinned qualification toolchain is Flutter 3.47.4 / Dart 3.13.3.
+Use Flutter **3.47 or later** and Dart **3.13 or later**. The published release is `0.1.0-dev.2`, a development preview. See [platform setup](platforms.md) for the measured Android, iOS, Web, Windows, macOS and Linux scope. The pinned qualification toolchain is Flutter 3.47.4 / Dart 3.13.3.
 
 Customer applications need Flutter tooling. They do not need Node.js or a JavaScript source build.
 
@@ -16,7 +16,7 @@ Add the dependency to your application's `pubspec.yaml`:
 dependencies:
   flutter:
     sdk: flutter
-  file_viewer_flutter: 0.1.0-dev.1
+  file_viewer_flutter: 0.1.0-dev.2
 ```
 
 ```sh

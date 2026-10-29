@@ -7,13 +7,19 @@ import 'package:file_viewer_flutter_linux/src/webview_inject_user_script.dart';
 
 import 'webview.dart';
 
+/// Process-wide CEF manager, browser registry and native event dispatcher.
+///
+/// Initialize once before creating controllers. Its notifier value becomes true
+/// when CEF initialization has completed.
 class WebviewManager extends ValueNotifier<bool> {
   static final WebviewManager _instance = WebviewManager._internal();
 
+  /// Returns the process-wide manager instance.
   factory WebviewManager() => _instance;
 
   late Completer<void> _creatingCompleter;
 
+  /// Native method channel used to create and control packaged CEF browsers.
   final MethodChannel pluginChannel = const MethodChannel("file_viewer_flutter_linux");
 
   final _webViews = <int, WebViewController>{};
@@ -22,10 +28,12 @@ class WebviewManager extends ValueNotifier<bool> {
   final _tempWebViews = <int, WebViewController>{};
   final _tempInjectUserScripts = <int, InjectUserScripts?>{};
 
+  /// Next temporary controller index, before CEF assigns a native browser ID.
   int nextIndex = 1;
 
   bool? _hasNativeKeySupport;
 
+  /// Completes when the initialization started by [initialize] finishes.
   Future<void> get ready => _creatingCompleter.future;
 
   /// Returns true if the platform has native key event handling (e.g., GTK on desktop Linux).
@@ -35,6 +43,9 @@ class WebviewManager extends ValueNotifier<bool> {
     return _hasNativeKeySupport!;
   }
 
+  /// Allocates an uninitialized controller with optional loading UI and scripts.
+  ///
+  /// Call the controller's `initialize` method before displaying its view.
   WebViewController createWebView({
     Widget? loading,
     InjectUserScripts? injectUserScripts,
@@ -48,6 +59,7 @@ class WebviewManager extends ValueNotifier<bool> {
     return controller;
   }
 
+  /// Removes a closed browser from the event registry.
   void removeWebView(int browserId) {
     if (browserId > 0) {
       _webViews.remove(browserId);
@@ -56,6 +68,7 @@ class WebviewManager extends ValueNotifier<bool> {
 
   WebviewManager._internal() : super(false);
 
+  /// Initializes CEF and installs native event routing, optionally overriding UA.
   Future<void> initialize({String? userAgent}) async {
     _creatingCompleter = Completer<void>();
     try {
@@ -82,6 +95,7 @@ class WebviewManager extends ValueNotifier<bool> {
     _webViews.clear();
   }
 
+  /// Associates an allocated controller index with its newly created CEF ID.
   void onBrowserCreated(int browserIndex, int browserId) {
     _webViews[browserId] = _tempWebViews[browserIndex]!;
     _injectUserScripts[browserId] = _tempInjectUserScripts[browserIndex];
@@ -90,6 +104,7 @@ class WebviewManager extends ValueNotifier<bool> {
     _tempInjectUserScripts.remove(browserIndex);
   }
 
+  /// Routes native callbacks to their owning controller and listener.
   Future<void> methodCallhandler(MethodCall call) async {
     switch (call.method) {
       case "onRenderProcessTerminated":
@@ -182,26 +197,33 @@ class WebviewManager extends ValueNotifier<bool> {
     }
   }
 
+  /// Sets cookie [key] to [val] for [domain] through the native cookie manager.
   Future<void> setCookie(String domain, String key, String val) async {
     assert(value);
     return pluginChannel.invokeMethod('setCookie', [domain, key, val]);
   }
 
+  /// Deletes cookie [key] for [domain] through the native cookie manager.
   Future<void> deleteCookie(String domain, String key) async {
     assert(value);
     return pluginChannel.invokeMethod('deleteCookie', [domain, key]);
   }
 
+  /// Returns cookies visible to the native CEF cookie manager.
   Future<dynamic> visitAllCookies() async {
     assert(value);
     return pluginChannel.invokeMethod('visitAllCookies');
   }
 
+  /// Returns cookies for [domain], optionally including HTTP-only cookies.
   Future<dynamic> visitUrlCookies(String domain, bool isHttpOnly) async {
     assert(value);
     return pluginChannel.invokeMethod('visitUrlCookies', [domain, isHttpOnly]);
   }
 
+  /// Requests process-wide CEF shutdown when the host application is closing.
+  ///
+  /// Do not use this to close an individual document or browser controller.
   Future<void> quit() async {
     //only call this method when you want to quit the app
     assert(value);

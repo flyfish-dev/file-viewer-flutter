@@ -14,12 +14,16 @@ import 'manifest.dart';
 import 'range.dart';
 import 'resource_host.dart';
 
+/// Creates the private loopback resource host used by native viewer surfaces.
 ViewerResourceHost createResourceHost() => NativeViewerResourceHost();
 
+/// Serves verified offline resources and scoped documents on the loopback address.
 class NativeViewerResourceHost implements ViewerResourceHost {
+  /// Loads resource manifests from [bundle], or the application's root bundle.
   NativeViewerResourceHost({AssetBundle? bundle})
     : manifest = ViewerAssetManifest(bundle: bundle);
 
+  /// Resource metadata shared by asset routing and checksum verification.
   final ViewerAssetManifest manifest;
   final _sources = <String, FileViewerSource>{};
   final _client = HttpClient()..autoUncompress = false;

@@ -25,8 +25,10 @@ extension type _BrowserSession(JSObject _) implements JSObject {
   external void destroy();
 }
 
+/// Creates a browser DOM surface backed by the packaged JavaScript runtime.
 FileViewerSurface createSurface() => WebViewerSurface();
 
+/// Owns one browser runtime session and its embeddable HTML container.
 class WebViewerSurface implements FileViewerSurface {
   static Future<void>? _loading;
   final _container = web.HTMLDivElement();

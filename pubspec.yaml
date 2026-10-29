@@ -1,10 +1,10 @@
 name: file_viewer_flutter
 description: Offline File Viewer widget with application-scoped warm-up and reusable document sessions.
-version: 0.1.0-dev.1
-homepage: https://file-viewer.app
+version: 0.1.0-dev.2
+homepage: https://flutter.file-viewer.app
 repository: https://github.com/flyfish-dev/file-viewer-flutter
 issue_tracker: https://github.com/flyfish-dev/file-viewer-flutter/issues
-documentation: https://github.com/flyfish-dev/file-viewer-flutter/blob/main/README.md
+documentation: https://flutter.file-viewer.app/en/docs/quickstart/
 topics:
   - file-viewer
   - pdf
@@ -35,13 +35,13 @@ dependencies:
   mime: ^2.0.0
   path: ^1.9.1
   path_provider: ^2.1.5
-  xml: ^6.6.1
-  file_viewer_flutter_assets: 0.1.0-dev.1
-  file_viewer_flutter_assets_cad: 0.1.0-dev.1
-  file_viewer_flutter_assets_drawing: 0.1.0-dev.1
-  file_viewer_flutter_assets_typst: 0.1.0-dev.1
-  file_viewer_flutter_linux: 0.1.0-dev.1
-  file_viewer_flutter_macos: 0.1.0-dev.1
+  xml: ^7.1.0
+  file_viewer_flutter_assets: 0.1.0-dev.2
+  file_viewer_flutter_assets_cad: 0.1.0-dev.2
+  file_viewer_flutter_assets_drawing: 0.1.0-dev.2
+  file_viewer_flutter_assets_typst: 0.1.0-dev.2
+  file_viewer_flutter_linux: 0.1.0-dev.2
+  file_viewer_flutter_macos: 0.1.0-dev.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

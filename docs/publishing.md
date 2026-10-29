@@ -1,6 +1,6 @@
 # Publishing the package family
 
-Publish `0.1.0-dev.1` resource and platform packages before the app-facing
+Publish `0.1.0-dev.2` resource and platform packages before the app-facing
 `file_viewer_flutter` package. The publisher is `flyfish.dev`. Keep the release
 at development-preview status until the qualification gates pass.
 
@@ -16,6 +16,23 @@ The staging directory must be outside the repository. Root dependency overrides
 are used only for validation before the internal packages exist in the registry.
 Before publishing the entry package, remove its staging overrides and lockfile,
 then resolve its dependencies from pub.dev.
+
+Install the pinned scorer and require a full score from the exact entry archive:
+
+```sh
+dart pub global activate pana 0.23.19
+# In the staged entry package, after its six dependencies are published:
+flutter pub publish --to-archive /absolute/file_viewer_flutter.tar.gz
+# From the repository:
+python3 tool/check-score.py /absolute/file_viewer_flutter.tar.gz
+```
+
+The score check runs Pana with dartdoc on the archive's actual contents, without
+repository overrides. The qualification workflow enforces this gate and retains
+the report. Publish version-locked component packages before running the gate for
+a new package-family version. Static analysis separately enforces public API
+documentation on every source change. Resource rebuilds preserve package README
+and changelog history; update that history explicitly for each release.
 
 Prefer `flutter pub publish` for normal uploads. If its large-file transfer is
 unreliable, `flutter pub publish --to-archive /absolute/package.tar.gz` creates a

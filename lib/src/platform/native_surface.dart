@@ -18,9 +18,11 @@ import 'linux_surface.dart';
 import 'navigation.dart';
 import 'surface.dart';
 
+/// Creates the Linux CEF surface or the platform's native WebView surface.
 FileViewerSurface createSurface() =>
     Platform.isLinux ? LinuxViewerSurface() : NativeViewerSurface();
 
+/// Owns a transferable native WebView without changing the host's global factory.
 class NativeViewerSurface implements FileViewerSurface {
   final _keepAlive = InAppWebViewKeepAlive();
   PlatformHeadlessInAppWebView? _headless;

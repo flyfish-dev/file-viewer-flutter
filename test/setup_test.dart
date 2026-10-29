@@ -9,6 +9,16 @@ void main() {
     final configured = configureViewerAndroidManifest(manifest);
     expect(configured.configName, 'company_network');
     expect(configured.manifest, contains('android.permission.INTERNET'));
+    final permission = XmlDocument.parse(configured.manifest)
+        .findAllElements('uses-permission')
+        .single;
+    expect(
+      permission.getAttribute(
+        'name',
+        namespaceUri: 'http://schemas.android.com/apk/res/android',
+      ),
+      'android.permission.INTERNET',
+    );
     expect(
       configureViewerAndroidManifest(configured.manifest).manifest,
       configured.manifest,

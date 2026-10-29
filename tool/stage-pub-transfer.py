@@ -16,7 +16,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = 'file_viewer_flutter_assets'
-VERSION = '0.1.0-dev.1'
+VERSION = json.loads((ROOT / 'runtime/package.json').read_text())['version']
 ticket = json.loads(os.environ.pop('PUB_UPLOAD_FORM'))
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
 if ticket.get('sourceCommit') != commit or ticket.get('package') != PACKAGE or ticket.get('version') != VERSION:

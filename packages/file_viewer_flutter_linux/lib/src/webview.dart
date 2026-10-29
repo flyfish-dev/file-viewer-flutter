@@ -11,27 +11,50 @@ import 'webview_textinput.dart';
 import 'webview_tooltip.dart';
 
 // CEF key event types
+/// CEF raw key-down event type.
 const int keyEventRawKeyDown = 0;
+/// CEF translated key-down event type.
 const int keyEventKeyDown = 1;
+/// CEF key-release event type.
 const int keyEventKeyUp = 2;
+/// CEF character-input event type.
 const int keyEventChar = 3;
 
 // CEF event flags
+/// CEF event with no modifiers or pressed mouse buttons.
 const int eventFlagNone = 0;
+/// CEF modifier indicating Caps Lock is enabled.
 const int eventFlagCapsLockOn = 1 << 0;
+/// CEF modifier indicating Shift is pressed.
 const int eventFlagShiftDown = 1 << 1;
+/// CEF modifier indicating Control is pressed.
 const int eventFlagControlDown = 1 << 2;
+/// CEF modifier indicating Alt is pressed.
 const int eventFlagAltDown = 1 << 3;
+/// CEF flag indicating the left mouse button is pressed.
 const int eventFlagLeftMouseButton = 1 << 4;
+/// CEF flag indicating the middle mouse button is pressed.
 const int eventFlagMiddleMouseButton = 1 << 5;
+/// CEF flag indicating the right mouse button is pressed.
 const int eventFlagRightMouseButton = 1 << 6;
+/// CEF modifier indicating the platform Command key is pressed.
 const int eventFlagCommandDown = 1 << 7;
+/// CEF modifier indicating Num Lock is enabled.
 const int eventFlagNumLockOn = 1 << 8;
+/// CEF flag identifying a numeric-keypad event.
 const int eventFlagIsKeyPad = 1 << 9;
+/// CEF flag identifying the left variant of a modifier key.
 const int eventFlagIsLeft = 1 << 10;
+/// CEF flag identifying the right variant of a modifier key.
 const int eventFlagIsRight = 1 << 11;
 
+/// Owns one native CEF browser and notifies when its view has initialized.
+///
+/// Create it through [WebviewManager.createWebView], call [initialize], then
+/// attach [webviewWidget] to one place in the widget tree. Dispose the controller
+/// after removing its view to close the native browser.
 class WebViewController extends ValueNotifier<bool> {
+  /// Creates a controller for a manager-assigned channel and browser index.
   WebViewController(this._pluginChannel, this._index, {Widget? loading})
       : super(false) {
     _loadingWidget = loading;
@@ -40,10 +63,13 @@ class WebViewController extends ValueNotifier<bool> {
   Widget? _loadingWidget;
 
   late WebView _webviewWidget;
+  /// Texture-backed widget, available after [initialize] completes.
   Widget get webviewWidget => _webviewWidget;
+  /// Custom loading content, or the adapter's default loading text.
   Widget get loadingWidget => _loadingWidget ?? const Text("loading...");
 
   late Completer<void> _creatingCompleter;
+  /// Completes when the initialization started by [initialize] has finished.
   Future<void> get ready => _creatingCompleter.future;
   bool _isDisposed = false;
   bool _focusEditable = false;
@@ -53,10 +79,13 @@ class WebViewController extends ValueNotifier<bool> {
   late int _textureId;
   final Map<String, JavascriptChannel> _javascriptChannels =
       <String, JavascriptChannel>{};
+  /// Registered JavaScript message channels keyed by channel name.
   Map<String, JavascriptChannel> get javascriptChannels => _javascriptChannels;
   WebviewEventsListener? _listener;
+  /// Current listener receiving browser lifecycle and navigation events.
   WebviewEventsListener? get listener => _listener;
 
+  /// Dispatches a native channel message to its registered Dart callback.
   void Function(String, String, String, String) get onJavascriptChannelMessage => (String channelName,
           String message, String callbackId, String frameId) {
         if (_javascriptChannels.containsKey(channelName)) {
@@ -67,9 +96,13 @@ class WebViewController extends ValueNotifier<bool> {
         }
       };
 
+  /// Widget-installed callback for the native tooltip text.
   Function(String)? get onToolTip => _onToolTip;
+  /// Widget-installed callback receiving a native CEF cursor type.
   Function(int)? get onCursorChanged => _onCursorChanged;
+  /// Callback indicating whether the focused DOM node accepts text input.
   Function(bool)? get onFocusedNodeChangeMessage => _onFocusedNodeChangeMessage;
+  /// Callback receiving native caret x, y and line height for IME placement.
   Function(int, int, int)? get onImeCompositionRangeChangedMessage =>
       _onImeCompositionRangeChangedMessage;
 
@@ -95,6 +128,7 @@ class WebViewController extends ValueNotifier<bool> {
     return _creatingCompleter.future;
   }
 
+  /// Replaces the listener used to receive lifecycle and browser events.
   void setWebviewListener(WebviewEventsListener listener) {
     _listener = listener;
   }
@@ -130,6 +164,7 @@ class WebViewController extends ValueNotifier<bool> {
     return _pluginChannel.invokeMethod('reload', _browserId);
   }
 
+  /// Navigates forward in this browser's session history.
   Future<void> goForward() async {
     if (_isDisposed) {
       return;
@@ -138,6 +173,7 @@ class WebViewController extends ValueNotifier<bool> {
     return _pluginChannel.invokeMethod('goForward', _browserId);
   }
 
+  /// Navigates backward in this browser's session history.
   Future<void> goBack() async {
     if (_isDisposed) {
       return;
@@ -146,6 +182,7 @@ class WebViewController extends ValueNotifier<bool> {
     return _pluginChannel.invokeMethod('goBack', _browserId);
   }
 
+  /// Opens the native CEF developer tools for this browser.
   Future<void> openDevTools() async {
     if (_isDisposed) {
       return;
@@ -154,6 +191,7 @@ class WebViewController extends ValueNotifier<bool> {
     return _pluginChannel.invokeMethod('openDevTools', _browserId);
   }
 
+  /// Updates the browser's uncommitted IME composition text.
   Future<void> imeSetComposition(String composingText) async {
     if (_isDisposed) {
       return;
@@ -163,6 +201,7 @@ class WebViewController extends ValueNotifier<bool> {
         .invokeMethod('imeSetComposition', [_browserId, composingText]);
   }
 
+  /// Commits text produced by the platform input method into the browser.
   Future<void> imeCommitText(String composingText) async {
     if (_isDisposed) {
       return;
@@ -172,6 +211,7 @@ class WebViewController extends ValueNotifier<bool> {
         .invokeMethod('imeCommitText', [_browserId, composingText]);
   }
 
+  /// Gives or removes native browser input focus according to [focus].
   Future<void> setClientFocus(bool focus) async {
     if (_isDisposed) {
       return;
@@ -197,6 +237,10 @@ class WebViewController extends ValueNotifier<bool> {
     ]);
   }
 
+  /// Registers named JavaScript channels and their Dart message callbacks.
+  ///
+  /// Channel names must be unique. Register only trusted application channels;
+  /// callbacks receive messages from the browser document.
   Future<void> setJavaScriptChannels(Set<JavascriptChannel> channels) async {
     if (_isDisposed) {
       return;
@@ -212,6 +256,9 @@ class WebViewController extends ValueNotifier<bool> {
         [_browserId, _extractJavascriptChannelNames(channels).toList()]);
   }
 
+  /// Completes the JavaScript request identified by callback and frame IDs.
+  ///
+  /// [error] indicates whether [result] represents a failed channel operation.
   Future<void> sendJavaScriptChannelCallBack(
       bool error, String result, String callbackId, String frameId) async {
     if (_isDisposed) {
@@ -222,6 +269,7 @@ class WebViewController extends ValueNotifier<bool> {
         [error, result, callbackId, _browserId, frameId]);
   }
 
+  /// Executes [code] in the current document without returning its value.
   Future<void> executeJavaScript(String code) async {
     if (_isDisposed) {
       return;
@@ -230,6 +278,7 @@ class WebViewController extends ValueNotifier<bool> {
     return _pluginChannel.invokeMethod('executeJavaScript', [_browserId, code]);
   }
 
+  /// Evaluates [code] and returns the native bridge's serialized result.
   Future<dynamic> evaluateJavascript(String code) async {
     if (_isDisposed) {
       return;
@@ -316,19 +365,24 @@ class WebViewController extends ValueNotifier<bool> {
   Function(int, int, int)? _onImeCompositionRangeChangedMessage;
 }
 
+/// Displays the initialized texture and routes pointer, focus and text input.
 class WebView extends StatefulWidget {
+  /// Browser controller that owns the native view displayed by this widget.
   final WebViewController controller;
 
+  /// Displays the view owned by [controller] after initialization.
   const WebView(this.controller, {super.key});
 
   @override
   WebViewState createState() => WebViewState();
 }
 
+/// Widget state responsible for native CEF texture layout and input forwarding.
 class WebViewState extends State<WebView> with WebeViewTextInput {
   final GlobalKey _key = GlobalKey();
   String _composingText = '';
   late final _focusNode = FocusNode();
+  /// Whether the view currently owns primary Flutter keyboard focus.
   bool isPrimaryFocus = false;
   WebviewTooltip? _tooltip;
   MouseCursor _mouseType = SystemMouseCursors.basic;

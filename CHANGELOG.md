@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.1.0-dev.2
+
+- Document the public Dart API, lifecycle contracts, sources, capabilities and
+  recovery behavior; enforce public-member documentation in static analysis.
+- Support XML 7.1 with current namespace-aware constructors and regression checks
+  for Android and Apple host setup.
+- Score the exact validated publication archive with Pana and dartdoc in CI;
+  retain the report and reject any lost pub points.
 - Fill the native PPTX viewport, implement page/width fitting and absolute zoom,
   and add slide navigation and Flutter-controlled slideshow entry and exit.
 - Restore format-aware automatic fitting instead of forcing width fitting on all
