@@ -41,7 +41,7 @@ if OUTPUT.exists():
 OUTPUT.mkdir(parents=True)
 for name in ['lib', 'bin', 'windows', 'packages', 'docs', 'example']:
     shutil.copytree(ROOT / name, OUTPUT / name, ignore=ignore, symlinks=True)
-for name in ['README.md', 'LICENSE', 'CHANGELOG.md', 'analysis_options.yaml', '.pubignore']:
+for name in ['README.md', 'README.zh-CN.md', 'LICENSE', 'CHANGELOG.md', 'analysis_options.yaml', '.pubignore']:
     shutil.copy2(ROOT / name, OUTPUT / name)
 for name in PACKAGES:
     pattern = rf'^  {re.escape(name)}: {re.escape(VERSION)}$'

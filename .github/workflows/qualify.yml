@@ -61,6 +61,9 @@ jobs:
         with:
           name: local-sdk
           path: .release/*sdk.tar.gz*
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
           retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
@@ -125,6 +128,10 @@ jobs:
         if: matrix.platform == 'linux'
         run: flutter build linux --debug --target integration_test/viewer_test.dart
         working-directory: example
+      - name: Build macOS integration binary
+        if: matrix.platform == 'macos'
+        run: flutter build macos --debug --no-pub --target integration_test/viewer_test.dart --dart-define=FILE_VIEWER_DIAGNOSTICS=true
+        working-directory: example
       - name: Prepare the verified CEF sandbox helper
         if: matrix.platform == 'linux'
         run: |
@@ -136,8 +143,12 @@ jobs:
         if: matrix.platform == 'linux'
         run: xvfb-run -a flutter drive --driver test_driver/integration_test.dart --target integration_test/viewer_test.dart --use-application-binary build/linux/${{ matrix.arch }}/debug/bundle/file_viewer_flutter_example --debug -d linux --no-pub
         working-directory: example
-      - name: Real Windows/macOS integration
-        if: matrix.platform != 'linux'
+      - name: Real macOS WKWebView integration
+        if: matrix.platform == 'macos'
+        run: flutter drive --driver test_driver/integration_test.dart --target integration_test/viewer_test.dart --use-application-binary "build/macos/Build/Products/Debug/File Viewer.app" --debug -d macos --no-pub
+        working-directory: example
+      - name: Real Windows integration
+        if: matrix.platform == 'windows'
         run: flutter test integration_test/viewer_test.dart -d ${{ matrix.platform }} --no-pub --dart-define=FILE_VIEWER_DIAGNOSTICS=true
         working-directory: example
       - name: Verify Windows runtime signature
