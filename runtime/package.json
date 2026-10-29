@@ -6,14 +6,18 @@
   "type": "module",
   "scripts": {
     "build": "node ../tool/build-runtime.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@file-viewer/core": "3.3.0",
+    "@file-viewer/pptx": "3.3.0",
     "@file-viewer/web-full": "3.3.0"
   },
   "devDependencies": {
     "esbuild": "0.28.2",
-    "playwright": "1.61.1"
+    "playwright": "1.61.1",
+    "typescript": "5.9.3"
   }
 }
 

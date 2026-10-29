@@ -38,6 +38,7 @@ jobs:
       - run: flutter analyze --no-pub
       - run: flutter test --no-pub
       - run: npm ci --prefix runtime
+      - run: npm run check --prefix runtime
       - run: npm test --prefix runtime
       - name: Verify generated resource bytes and manifests
         run: |

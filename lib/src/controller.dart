@@ -69,6 +69,29 @@ class FileViewerController extends ChangeNotifier {
   Future<Object?> getViewState() => _bound.command('getViewState');
   Future<Object?> applyViewState(Map<String, Object?> state) =>
       _bound.command('applyViewState', {'state': state});
+
+  /// Enter or leave slideshow mode on a presentation that supports it.
+  Future<void> setPresentationMode(bool active) async {
+    final current = await getViewState();
+    final capability = current is Map ? current['extra'] : null;
+    if (capability is! Map || capability['presentationAvailable'] != true) {
+      throw const FileViewerException(
+        FileViewerErrorCode.unsupportedOperation,
+        'Slideshow mode is unavailable for this document.',
+      );
+    }
+    final state = await applyViewState({
+      'extra': {'presenting': active},
+    });
+    final extra = state is Map ? state['extra'] : null;
+    if (extra is! Map || extra['presenting'] != active) {
+      throw const FileViewerException(
+        FileViewerErrorCode.unsupportedOperation,
+        'Slideshow mode is unavailable for this document.',
+      );
+    }
+  }
+
   Future<FileViewerCapabilities> getCapabilities() async {
     final value = await _bound.command('getOperationAvailability');
     return FileViewerCapabilities(

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fill the native PPTX viewport, implement page/width fitting and absolute zoom,
+  and add slide navigation and Flutter-controlled slideshow entry and exit.
 - Restore format-aware automatic fitting instead of forcing width fitting on all
   documents; small spreadsheets keep their natural size.
 - Expose the initial `FileViewer.fit` policy and restore automatic fitting with

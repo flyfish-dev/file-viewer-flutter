@@ -74,12 +74,19 @@ class _ControlledPreviewState extends State<ControlledPreview> {
 | Restore format-aware automatic fit | `fit()` or `fit(mode: 'auto')` |
 | Fit width / page | `fit(mode: 'width')`, `fit(mode: 'contain')` |
 | Read / restore view state | `getViewState()`, `applyViewState(state)` |
+| PPTX slideshow (repository main) | `setPresentationMode(true)` / `setPresentationMode(false)` |
 | Query available operations | `getCapabilities()` |
 | Clear current document | `close()` |
 
 Operations depend on the format. Query `getCapabilities()` before exposing application actions; a shared method does not give every format identical capabilities. Print, download and browser-export UI remains gated while native host output integration is qualified in this preview.
 
 The repository defaults to `FileViewer(fit: 'auto', ...)`. Automatic fitting follows viewport changes until the user interacts with the view. Spreadsheets shrink when needed and do not enlarge a small sheet above its natural size. Explicit width fitting may enlarge content; call `fit()` to return to the format-aware policy. Retained sessions preserve manual zoom and scrolling.
+
+On repository main, PPTX supports `setPresentationMode(true)` after document
+readiness. Use `applyViewState({'page': 2})` to navigate during reading or
+slideshow. Leaving slideshow resumes the current slide at the reading zoom;
+these operations retain the parsed document. Other formats return a typed
+`unsupportedOperation` error for slideshow commands.
 
 ## Errors and recovery
 

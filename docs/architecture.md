@@ -36,6 +36,14 @@ All native targets currently use the same loopback routing. An Android `WebViewA
 
 ## Distribution
 
+The PPTX native viewport adapter uses the public, pinned `@file-viewer/pptx`
+engine without copying or changing its parsing or drawing code. It establishes
+a full-height host, registers shared core fit/zoom/view-state providers, and
+keeps slideshow and pagination controls within the bounded Flutter surface.
+Automatic fitting and user zoom use a single absolute scale; small surfaces
+combine the engine's zoom floor with CSS layout zoom. The native
+adapter reports actual slide bounds for layout consumers and qualification.
+
 The adapter consumes immutable public npm release archives only. Rebuilding assets does not copy files from the private File Viewer source repository. Four generated Flutter asset packages keep each pub archive below its size budget. Their package versions, upstream version and protocol must match.
 
 Copy receipts use the checked-in source epoch of the pinned upstream npm release instead of the build machine's wall clock. Their manifest hashes are recomputed after normalization. SDK inputs are restricted to version-controlled sources, excluding local IDE settings and generated plugin registrants. Tar/gzip timestamps, ownership and modes are canonicalized as well; actual qualification dates remain in the evidence reports.

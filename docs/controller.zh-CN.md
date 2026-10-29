@@ -74,12 +74,18 @@ class _ControlledPreviewState extends State<ControlledPreview> {
 | 恢复按格式自动适配 | `fit()` 或 `fit(mode: 'auto')` |
 | 适宽 / 适页 | `fit(mode: 'width')`、`fit(mode: 'contain')` |
 | 读取 / 恢复视图状态 | `getViewState()`、`applyViewState(state)` |
+| PPTX 放映（主分支新增） | `setPresentationMode(true)` / `setPresentationMode(false)` |
 | 查询可用操作 | `getCapabilities()` |
 | 清除当前文档 | `close()` |
 
 不同格式的可用操作不同。先用 `getCapabilities()` 查询实际可用项，再向用户显示对应业务操作；搜索、缩放等命令不代表每个格式具有相同能力。开发预览版的打印、下载与浏览器导出 UI 仍处于宿主原生输出接入验收阶段。
 
 仓库默认使用 `FileViewer(fit: 'auto', ...)`。自动适配跟随视口变化，直到用户手动操作视图；表格在必要时缩小，小表格不会自动放大到原始大小以上。显式适宽可能放大内容，调用 `fit()` 可恢复按格式自动适配。保留会话时会保留手动缩放和滚动位置。
+
+主分支新增 PPTX 放映控制：文档就绪后调用 `setPresentationMode(true)`，
+阅读和放映时均可通过 `applyViewState({'page': 2})` 跳转。
+退出放映会以阅读缩放继续显示当前幻灯片，无需重新解析文档。
+对不支持放映的格式调用该方法会返回 `unsupportedOperation` 类型错误。
 
 ## 错误与恢复
 

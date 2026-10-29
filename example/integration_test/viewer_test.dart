@@ -134,6 +134,7 @@ void main() {
         'sample.docx',
         'sample.xlsx',
         'sample.pptx',
+        'presentation-tour.pptx',
         'sample.txt',
       ]) {
         final expected = documentReady + 1;
@@ -141,6 +142,7 @@ void main() {
         source.value = FileViewerSource.asset('assets/$filename');
         await waitFor(() => documentReady >= expected);
         timings.add({
+          'file': filename,
           'format': filename.split('.').last,
           'elapsedMs': timer.elapsedMilliseconds,
         });
@@ -149,6 +151,46 @@ void main() {
           isNotEmpty,
         );
         step(filename);
+        if (filename == 'sample.pdf') {
+          Object? presentationError;
+          try {
+            await command(() => controller.setPresentationMode(true));
+          } catch (error) {
+            presentationError = error;
+          }
+          expect(
+            presentationError,
+            isA<FileViewerException>().having(
+              (error) => error.code,
+              'code',
+              FileViewerErrorCode.unsupportedOperation,
+            ),
+          );
+        }
+        if (filename == 'presentation-tour.pptx') {
+          final loads = events.where((event) => event == 'load-start').length;
+          var state = await command(controller.getViewState) as Map;
+          expect(state['pageCount'], 3);
+          await command(() => controller.applyViewState({'page': 2}));
+          state = await command(controller.getViewState) as Map;
+          expect(state['page'], 2);
+          await command(() => controller.setPresentationMode(true));
+          state = await command(controller.getViewState) as Map;
+          expect((state['extra'] as Map)['presenting'], true);
+          expect(state['page'], 2);
+          expect((state['extra'] as Map)['presentationPage'], 2);
+          await command(() => controller.applyViewState({'page': 3}));
+          state = await command(controller.getViewState) as Map;
+          expect((state['extra'] as Map)['presentationPage'], 3);
+          await command(() => controller.setPresentationMode(false));
+          state = await command(controller.getViewState) as Map;
+          expect((state['extra'] as Map)['presenting'], false);
+          expect(state['page'], 3);
+          await command(() => controller.applyViewState({'page': 1}));
+          state = await command(controller.getViewState) as Map;
+          expect(state['page'], 1);
+          expect(events.where((event) => event == 'load-start').length, loads);
+        }
         if (filename == 'sample.xlsx') {
           final loads = events.where((event) => event == 'load-start').length;
           await waitForScale((scale) => (scale - 1).abs() < 0.01);
@@ -170,6 +212,122 @@ void main() {
           await command(controller.fit);
           expect(await readScale(), lessThanOrEqualTo(1));
           await recordViewport('auto fit restores adaptive layout');
+          expect(events.where((event) => event == 'load-start').length, loads);
+          viewport.value = const Size(720, 440);
+        }
+        if (filename == 'sample.pptx') {
+          final loads = events.where((event) => event == 'load-start').length;
+          Future<void> assertPresentationFit(String label) async {
+            final fit = await command(controller.fit) as Map;
+            expect(
+              fit['applied'],
+              true,
+              reason: 'PPTX must implement the shared fit contract.',
+            );
+            var state = await command(controller.getViewState) as Map;
+            final layoutDeadline = DateTime.now().add(
+              const Duration(seconds: 10),
+            );
+            // The public engine schedules native WebView layout across frames.
+            // Qualify the eventual rendered bounds, not just its desired scale.
+            while (true) {
+              final extra = state['extra'] as Map;
+              final rendered = extra['renderedSlide'] as Map?;
+              final dimensions = extra['slideDimensions'] as Map;
+              final scale = (state['scale'] as num).toDouble();
+              if (rendered != null &&
+                  ((rendered['width'] as num) -
+                              (dimensions['width'] as num) * scale)
+                          .abs() <
+                      1 &&
+                  ((rendered['height'] as num) -
+                              (dimensions['height'] as num) * scale)
+                          .abs() <
+                      1) {
+                break;
+              }
+              if (DateTime.now().isAfter(layoutDeadline)) {
+                fail('PPTX layout did not settle: ${jsonEncode(state)}');
+              }
+              await tester.pump(const Duration(milliseconds: 100));
+              state = await command(controller.getViewState) as Map;
+            }
+            final scroll = state['scroll'] as Map;
+            final extra = state['extra'] as Map;
+            final dimensions = extra['slideDimensions'] as Map;
+            final viewport = extra['viewport'] as Map;
+            final rendered = extra['renderedSlide'] as Map;
+            final width = (viewport['width'] as num).toDouble();
+            final height = (viewport['height'] as num).toDouble();
+            final slideWidth = (dimensions['width'] as num).toDouble();
+            final slideHeight = (dimensions['height'] as num).toDouble();
+            final actualScale = (state['scale'] as num).toDouble();
+            final expectedScale = (width / slideWidth < height / slideHeight)
+                ? width / slideWidth
+                : height / slideHeight;
+            expect(actualScale, closeTo(expectedScale, 0.015));
+            expect(slideWidth * actualScale, lessThanOrEqualTo(width + 1));
+            expect(slideHeight * actualScale, lessThanOrEqualTo(height + 1));
+            expect(
+              (rendered['width'] as num).toDouble(),
+              closeTo(slideWidth * actualScale, 1),
+            );
+            expect(
+              (rendered['height'] as num).toDouble(),
+              closeTo(slideHeight * actualScale, 1),
+            );
+            expect(
+              (scroll['clientHeight'] as num).toDouble(),
+              greaterThan(
+                tester.getSize(find.byKey(viewportKey)).height * 0.65,
+              ),
+            );
+            await recordViewport(label);
+          }
+
+          await assertPresentationFit('PPTX fills the bounded viewport');
+          final fitted = await readScale();
+          await command(controller.zoomIn);
+          final enlarged = await readScale();
+          expect(
+            enlarged,
+            greaterThan(fitted),
+            reason: 'Zoom in must never shrink a fitted slide.',
+          );
+          await command(controller.zoomOut);
+          expect(await readScale(), closeTo(fitted, 0.001));
+          await command(controller.resetZoom);
+          expect(await readScale(), closeTo(1, 0.001));
+          viewport.value = const Size(420, 580);
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(await readScale(), closeTo(1, 0.001));
+          await assertPresentationFit('PPTX portrait viewport fit');
+          viewport.value = const Size(280, 300);
+          await tester.pump(const Duration(milliseconds: 300));
+          await assertPresentationFit(
+            'PPTX small viewport fits below engine zoom floor',
+          );
+          viewport.value = const Size(800, 320);
+          await tester.pump(const Duration(milliseconds: 300));
+          await assertPresentationFit('PPTX short landscape viewport fit');
+          final readingScale = await readScale();
+          await command(() => controller.setPresentationMode(true));
+          var state = await command(controller.getViewState) as Map;
+          expect((state['extra'] as Map)['presenting'], true);
+          final slide = (state['extra'] as Map)['renderedSlide'] as Map;
+          final bounds = tester.getSize(find.byKey(viewportKey));
+          expect(
+            (slide['width'] as num).toDouble(),
+            lessThanOrEqualTo(bounds.width + 1),
+          );
+          expect(
+            (slide['height'] as num).toDouble(),
+            lessThanOrEqualTo(bounds.height + 1),
+          );
+          await command(() => controller.setPresentationMode(false));
+          state = await command(controller.getViewState) as Map;
+          expect((state['extra'] as Map)['presenting'], false);
+          expect(await readScale(), closeTo(readingScale, 0.001));
           expect(events.where((event) => event == 'load-start').length, loads);
           viewport.value = const Size(720, 440);
         }

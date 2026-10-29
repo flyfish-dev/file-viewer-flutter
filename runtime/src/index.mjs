@@ -25,7 +25,16 @@ async function warmUp() {
 }
 
 function makeOptions(input, bases) {
-  const defaults = withFullViewerOptions(input, bases.base);
+  const defaults = withFullViewerOptions({
+    ...input,
+    renderers: [input?.renderers || [], {
+      id: 'file-viewer-flutter-presentation-viewport',
+      handlers: [{
+        rendererId: 'office-presentation',
+        handler: async (...args) => (await import('./presentation.ts')).renderPresentation(...args),
+      }],
+    }],
+  }, bases.base);
   const base = new URL(bases.base).href;
   const remap = value => {
     if (typeof value === 'string' && value.startsWith(base)) {
