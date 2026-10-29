@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/flyfish-dev/file-viewer">
-    <img src="https://raw.githubusercontent.com/flyfish-dev/file-viewer-flutter/main/docs/assets/file-viewer.png" width="80" height="80" alt="File Viewer logo">
+    <img src="https://raw.githubusercontent.com/flyfish-dev/file-viewer/main/apps/official-site/public/logo.png" width="92" height="92" alt="File Viewer logo">
   </a>
 </p>
 
